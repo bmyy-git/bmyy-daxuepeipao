@@ -1,5 +1,7 @@
 # 笨猫丫丫 OPC 学习陪跑网站实现文档
 
+> 修订说明：已按《产品执行手册 V2.4》及 `yayasmart-demo` 于 2026-06-15 补充修订。第 15-16 节覆盖前文中冲突的 MVP 边界、状态和接口定义。
+
 ## 1. 实现目标
 
 本实现文档基于《笨猫丫丫OPC学习陪跑-网站设计文档》和《笨猫丫丫OPC学习陪跑-思路》整理，目标是在不偏离原始产品定位的前提下，将网站建设拆解为可开发、可验收、可迭代的工程方案。
@@ -891,3 +893,170 @@ AI 生成结果只作为 V0.1 草案，必须经导师确认后才能成为 V1.0
 - 短信和邮件服务供应商。
 - 奖金分成比例、结算周期和展示文案是否已有正式合同依据。
 - 学生端是否只做 H5，是否需要后续封装小程序或 App。
+
+## 15. V2.4 实现修订
+
+本节覆盖前文中与《产品执行手册 V2.4》不一致的 MVP 取舍。学生执行闭环、亲情卡、多卡生命周期和基础 RBAC 属于主流程，不再作为仅预留入口的后续功能。
+
+### 15.1 前端路由
+
+```text
+/entry?idd={idd}&idh={idh}       NFC 统一入口
+/activate/:sessionId             首次激活
+/waiting                         资料解析与导师匹配
+/mentor-ready                    导师揭晓与首次沟通
+/dashboard                       学生仪表盘
+/sop                             SOP 路线图
+/tasks                           任务列表
+/tasks/:taskId                   任务详情与成果提交
+/reviews                         周/月/学期复盘
+/growth                          成长档案、荣誉和奖金
+/ai                              AI 问答
+/messages                        消息中心
+/parent                          家长观察室
+/mentor                          导师工作台
+/admin                           管理后台
+```
+
+旧链接 `?id1=&id2=` 在网关层兼容，解析后 301/前端替换为 `idd/idh` 语义；日志同时保存原始参数，便于已有卡片迁移。
+
+### 15.2 状态拆分
+
+```text
+CardStatus = unbound | active | lost | replaced | revoked
+CardType = student_primary | student_secondary | parent_family | staff
+StudentStage = activating | pending_match | mentor_matched | sop_reviewing |
+               active | paused | graduated
+TaskStatus = todo | doing | submitted | changes_requested | accepted |
+             overdue | cancelled
+ReviewStatus = draft | submitted | mentor_feedback | closed
+```
+
+`GET /api/nfc/resolve` 先校验卡片生命周期，再根据卡片类型和学生阶段决定页面。不得继续用单个 `nfc_cards.status` 同时表达卡片挂失和学生 SOP 状态。
+
+### 15.3 学生任务执行接口
+
+```text
+GET  /api/students/me/action-center
+GET  /api/tasks?scope=current
+GET  /api/tasks/{id}
+POST /api/tasks/{id}/start
+POST /api/tasks/{id}/submissions
+POST /api/task-submissions/{id}/withdraw
+POST /api/mentor/task-submissions/{id}/accept
+POST /api/mentor/task-submissions/{id}/request-changes
+GET  /api/students/me/growth-events
+POST /api/reviews
+POST /api/mentor/reviews/{id}/feedback
+```
+
+成果提交请求示例：
+
+```json
+{
+  "content": "已完成比赛报名和第一次训练，附报名截图与代码仓库。",
+  "evidence_file_ids": ["file_101"],
+  "evidence_links": ["https://example.com/repository"],
+  "self_rating": 4,
+  "blockers": []
+}
+```
+
+导师退回必须填写原因和补充要求。验收通过必须记录验收人、时间、评语和可选成长积分；任务只有进入 `accepted` 才计入正式完成率、荣誉和奖金规则。
+
+### 15.4 新增数据表
+
+| 表 | 用途 |
+| --- | --- |
+| `card_bindings` | 支持一个学生绑定多卡、主副卡和亲情卡 |
+| `task_submissions` | 学生每次成果提交及版本 |
+| `task_submission_files` | 成果证据文件关联 |
+| `task_reviews` | 导师通过/退回记录 |
+| `period_reviews` | 周、月、学期复盘 |
+| `growth_events` | 任务验收、荣誉、目标变更等成长时间线 |
+| `honor_records` | 荣誉申报、审核和展示 |
+| `bonus_ledger` | 奖金应计、审核、待支付、已结算流水 |
+| `parent_relations` | 家长身份、学生授权范围和关系状态 |
+| `encouragement_messages` | 家长鼓励消息 |
+| `notifications` | 站内消息及短信/邮件投递状态 |
+
+关键约束：
+
+- `card_bindings(idd)` 唯一；同一学生最多一张有效 `student_primary`。
+- `task_submissions(task_id, version)` 唯一且版本递增。
+- 同一任务同时最多一个有效待审提交。
+- `bonus_ledger` 使用不可变流水，修正通过冲正记录完成，不直接改历史金额。
+- 家长权限由 `parent_relations.consent_scope` 决定，不从学生接口裁剪后复用。
+
+### 15.5 异步与通知
+
+使用队列处理文档解析、Dify、媒体转码/预览、通知和荣誉规则计算。建议第一阶段采用 Redis + BullMQ；若部署环境暂不引入 Redis，则使用 PostgreSQL job 表和定时 worker，但 API 契约保持一致。
+
+通知事件至少包括：
+
+```text
+student.activated
+documents.analysis_completed
+mentor.assigned
+sop.confirmed
+task.due_soon
+task.submitted
+task.changes_requested
+task.accepted
+review.feedback_added
+goal_revision.reviewed
+parent.encouragement_received
+bonus.status_changed
+```
+
+### 15.6 静态资源实现
+
+将根目录资源复制或映射到前端 `public/img`、`public/mp4`，生产 URL 保持：
+
+```text
+/img/yayasmart-logo-5A-FFFFFF.png
+/img/yayasmart-logo-5A-005A53.png
+/img/yayasmart-logo-5A-B81F24.png
+/img/yayasmart-logo-1-1152-928.png
+/img/yayasmart-logo-2A-900-900.png
+/img/yayasmart-logo-2B-900-900.png
+/img/yayasmart-logo-3A-1280-1080.png
+/img/yayasmart-logo-3B-1280-1080.png
+/img/yayasmart-logo-3C-1280-1080.jpg
+/img/yayasmart-logo-4A.png
+/img/yayasmart-logo-4B.png
+/mp4/yaya-smart.mp4
+```
+
+Vue 组件：
+
+```text
+BrandLogo.vue
+BrandSceneImage.vue
+JourneyVideo.vue
+MotionFallback.vue
+```
+
+`JourneyVideo.vue` 必须支持 `poster`、播放失败静态图、可见区域外暂停、低流量降级和 `prefers-reduced-motion`。
+
+源文件 `img/yayasmart-logo-1-1152 -928.png` 含不可见窄空格，构建时必须复制并规范化为 `public/img/yayasmart-logo-1-1152-928.png`，业务代码禁止引用原始特殊字符文件名。
+
+### 15.7 demo 迁移原则
+
+- 复用颜色、卡片、时间轴、抽屉、响应式断点和陪伴式文案。
+- 不复制 demo 中的 `alert`、`setTimeout` 模拟状态、硬编码学生数据和 `href="#"`。
+- demo 中任务复选框改为打开任务详情；提交成果后由服务端状态驱动 UI。
+- “模拟匹配”只保留在开发环境 Story/测试夹具，不进入生产页面。
+- 所有按钮具备 loading、disabled、成功、失败和幂等处理。
+
+## 16. 修订后交付顺序
+
+1. NFC 双 ID、多卡绑定、激活和鉴权。
+2. 资料上传、Dify V0.1、导师分配和 SOP V1.0。
+3. 学生行动中心、任务成果提交和导师验收。
+4. 周复盘、风险干预、目标修订和 SOP 新版本。
+5. 家长观察室、鼓励消息和授权撤回。
+6. 荣誉审核、奖金不可变流水和支付状态。
+7. 细分 RBAC、运营后台和全链路审计。
+
+每阶段均需提供 API 测试、状态机单元测试和至少一条端到端主流程测试。

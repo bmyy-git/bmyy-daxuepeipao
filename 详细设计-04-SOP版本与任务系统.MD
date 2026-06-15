@@ -267,3 +267,75 @@ CheckinsModule
 - 目标修订后生成新版本，不覆盖旧版本。
 - 学生仪表盘能显示本周任务和红线预警。
 - 打卡后连续天数能更新。
+
+## 13. V2.4 学生执行闭环修订
+
+### 13.1 任务状态机
+
+```text
+todo → doing → submitted → accepted
+                   ↓
+           changes_requested → submitted
+
+todo/doing/submitted/changes_requested → overdue
+任意未验收状态 → cancelled（仅导师或管理员）
+```
+
+学生不能直接把任务改成 `done`。正式完成状态统一为 `accepted`，必须存在导师验收记录；纯习惯类任务可配置 `review_mode=auto`，由规则引擎验收并标明系统验收。
+
+### 13.2 成果提交
+
+新增 `task_submissions`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | varchar | 提交 ID |
+| task_id | varchar | 任务 |
+| student_id | varchar | 学生 |
+| version | integer | 第几次提交 |
+| content | text | 成果说明 |
+| evidence_links | jsonb | 外部证据链接 |
+| self_rating | integer | 1-5 自评 |
+| blockers | jsonb | 阻塞项 |
+| status | varchar | submitted / withdrawn / accepted / changes_requested |
+| submitted_at | timestamp | 提交时间 |
+
+新增 `task_reviews`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | varchar | 验收 ID |
+| submission_id | varchar | 对应提交 |
+| reviewer_id | varchar | 导师或系统 |
+| decision | varchar | accept / request_changes |
+| comment | text | 反馈 |
+| requirements | jsonb | 补充要求 |
+| reviewed_at | timestamp | 验收时间 |
+
+### 13.3 周期复盘
+
+新增 `period_reviews`，支持 `weekly/monthly/semester`：
+
+- 学生总结完成事项、困难、状态评分和下一周期意向。
+- 系统汇总任务验收率、延期项、红线和 AI 问答关注点。
+- 导师给出反馈并确认下一周期重点。
+- 复盘关闭后写入 `growth_events`，并可批量生成下一周期任务。
+
+### 13.4 荣誉与奖金联动
+
+只有验收通过或后台审核通过的成果可触发：
+
+- 成长事件。
+- 连续行动与任务完成率。
+- 荣誉规则计算。
+- 奖金应计流水。
+
+奖金状态为 `pending_evidence/pending_review/approved/pending_payment/settled/rejected`。金额记录与任务状态解耦，任务通过不代表自动支付。
+
+### 13.5 验收补充
+
+- 学生提交图片、文件、链接或文字成果后状态进入 `submitted`。
+- 导师退回后，学生能看到具体原因并提交新版本。
+- 导师通过后任务进入 `accepted`，历史提交与反馈不可删除。
+- 仪表盘完成率只统计 `accepted`。
+- 每个周期均可形成学生复盘、导师反馈和下一周期任务。

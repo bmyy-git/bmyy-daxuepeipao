@@ -216,3 +216,60 @@ recordAccessLog(payload)
 - 缺少 `id1` 或 `id2` 时进入异常提示页。
 - 停用卡片不能继续访问业务页面。
 - 每次 NFC 访问均记录解析日志。
+
+## 12. V2.4 多卡与双状态修订
+
+前文 `id1/id2` 仅作为旧卡兼容参数。正式业务标识统一为：
+
+| 字段 | 含义 |
+| --- | --- |
+| `idd` | NFC 物理卡唯一 ID |
+| `idh` | 8 位十六进制业务编号，编码角色范围 |
+| `card_type` | `student_primary/student_secondary/parent_family/staff` |
+
+### 12.1 卡片与学生状态分离
+
+`nfc_cards.status` 调整为 `unbound/active/lost/replaced/revoked`，只描述物理卡。学生当前页面由 `students.stage` 决定：
+
+| 学生阶段 | 学生卡页面 |
+| --- | --- |
+| `activating` | 激活页 |
+| `pending_match` | 等待页 |
+| `mentor_matched`、`sop_reviewing` | 导师就位页 |
+| `active` | 学生仪表盘 |
+| `paused` | 服务暂停说明页 |
+| `graduated` | 成长档案页 |
+
+`parent_family` 卡忽略学生操作页路由，始终先校验家长关系和授权，再进入家长观察室。
+
+### 12.2 绑定模型
+
+新增 `card_bindings`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | varchar | 绑定 ID |
+| card_id | varchar | 对应 `idd` |
+| subject_type | varchar | student / parent / staff |
+| subject_id | varchar | 用户或关系 ID |
+| student_id | varchar | 关联学生 |
+| card_type | varchar | 卡类型 |
+| is_primary | boolean | 是否主卡 |
+| status | varchar | active / ended |
+| bound_at | timestamp | 绑定时间 |
+| ended_at | timestamp | 解绑时间 |
+
+### 12.3 生命周期接口
+
+```text
+POST /api/admin/nfc-cards/generate
+POST /api/admin/nfc-cards/import-idd
+POST /api/admin/nfc-cards/{idd}/bind
+POST /api/admin/nfc-cards/{idd}/report-lost
+POST /api/admin/nfc-cards/{idd}/restore
+POST /api/admin/nfc-cards/{idd}/replace
+POST /api/admin/nfc-cards/{idd}/set-primary
+DELETE /api/admin/nfc-cards/{idd}/binding
+```
+
+换卡必须在事务中完成：旧卡标记 `replaced`、旧绑定结束、新绑定建立、新卡设为主卡，并写审计日志。旧卡再次碰触不得暴露学生信息。
