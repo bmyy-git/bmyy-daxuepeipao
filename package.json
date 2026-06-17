@@ -1,0 +1,27 @@
+{
+  "name": "benmaoyaya-opc",
+  "private": true,
+  "version": "2.4.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @benmaoyaya/web",
+    "dev:web": "npm run dev --workspace @benmaoyaya/web",
+    "dev:api": "npm run dev --workspace @benmaoyaya/api",
+    "build": "npm run build --workspace @benmaoyaya/web",
+    "build:web": "npm run build --workspace @benmaoyaya/web",
+    "build:api": "npm run build --workspace @benmaoyaya/api",
+    "build:all": "npm run build:web && npm run build:api",
+    "lint": "npm run lint --workspace @benmaoyaya/web",
+    "lint:web": "npm run lint --workspace @benmaoyaya/web",
+    "lint:api": "npm run lint --workspace @benmaoyaya/api",
+    "lint:all": "npm run lint:web && npm run lint:api",
+    "test": "npm run test --workspace @benmaoyaya/api",
+    "test:api": "npm run test --workspace @benmaoyaya/api",
+    "preview": "npm run preview --workspace @benmaoyaya/web",
+    "prisma:generate": "npm run prisma:generate --workspace @benmaoyaya/api",
+    "prisma:deploy": "npm run prisma:deploy --workspace @benmaoyaya/api",
+    "prisma:seed": "npm run prisma:seed --workspace @benmaoyaya/api"
+  }
+}

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 导师匹配成功</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 12px; }
+        header img { width: 40px; height: 40px; border-radius: 10px; }
+        header h1 { font-size: 1.25rem; font-weight: 600; }
+        header .back { color: rgba(255,255,255,0.8); font-size: 0.875rem; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .success-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #D1FAE5;
+            color: #059669;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .letter-wrapper {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .envelope-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(135deg, #E2E8F0, #F1F5F9);
+            clip-path: polygon(0 100%, 50% 0, 100% 100%);
+            animation: open-letter 1.5s ease-out forwards;
+            animation-delay: 0.5s;
+        }
+        @keyframes open-letter {
+            0% { transform: scaleY(1); }
+            100% { transform: scaleY(0); opacity: 0; }
+        }
+
+        .mentor-card {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .mentor-avatar {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,85,83,0.1), rgba(139,92,246,0.1));
+            padding: 10px;
+            position: relative;
+        }
+        .mentor-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .mentor-badges {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .mentor-badge {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+            color: #B45309;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .mentor-badge.gold {
+            background: linear-gradient(135deg, #FCD34D, #F59E0B);
+            color: white;
+        }
+
+        .mentor-name {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .mentor-title {
+            font-size: 1rem;
+            color: var(--brand-primary);
+            margin-bottom: 16px;
+        }
+
+        .mentor-stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .mentor-desc {
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .contact-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 85, 83, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 85, 83, 0.4); }
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-dark);
+            border: 2px solid #E2E8F0;
+        }
+        .btn-secondary:hover { border-color: var(--brand-primary); }
+
+        .agreement-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 32px;
+        }
+        .agreement-card h3 {
+            font-size: 1.1rem;
+            color: var(--brand-primary);
+            margin-bottom: 16px;
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .mode-card {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #E2E8F0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mode-card:hover { border-color: var(--brand-primary); }
+        .mode-card.selected {
+            border-color: var(--brand-primary);
+            background: rgba(0,85,83,0.05);
+        }
+        .mode-card h4 {
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+        .mode-card .price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 8px;
+        }
+        .mode-card .desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 85, 83, 0.4); }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.1rem; }
+            .letter-wrapper { padding: 20px; }
+            .mentor-stats { gap: 16px; }
+            .mode-selector { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+            <h1>笨猫丫丫OPC</h1>
+        </div>
+        <a href="index.html" class="back">← 返回首页</a>
+    </header>
+
+    <div class="container">
+        <div class="success-badge">
+            <span>🎉</span> 恭喜！导师匹配成功
+        </div>
+
+        <div class="letter-wrapper">
+            <div class="envelope-top"></div>
+            
+            <div class="mentor-card">
+                <div class="mentor-avatar">
+                    <img src="yayasmart-logo-all/yayasmart-1-cat-default.png" alt="导师头像">
+                </div>
+
+                <div class="mentor-badges">
+                    <span class="mentor-badge">清北博士</span>
+                    <span class="mentor-badge gold">金牌教练</span>
+                </div>
+
+                <div class="mentor-name">李明博士</div>
+                <div class="mentor-title">清华大学 计算机科学与技术博士</div>
+
+                <div class="mentor-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">200+</div>
+                        <div class="stat-label">辅导次数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">99%</div>
+                        <div class="stat-label">好评率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">58</div>
+                        <div class="stat-label">获奖学员</div>
+                    </div>
+                </div>
+
+                <div class="mentor-desc">
+                    专注于计算机专业升学规划，擅长帮助学生制定系统化的学习路径。在算法竞赛、科研论文、保研面试等方面有丰富的指导经验。
+                </div>
+
+                <div class="contact-buttons">
+                    <button class="btn btn-primary" onclick="sendEmail()">
+                        <span>📧</span> 发送邮件
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyWechat()">
+                        <span>💬</span> 添加企业微信
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyMeeting()">
+                        <span>📹</span> 加入腾讯会议
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="agreement-card">
+            <h3>📋 选择合作模式</h3>
+            
+            <div class="mode-selector">
+                <div class="mode-card" onclick="selectMode('bet')">
+                    <h4>🎯 对赌分成</h4>
+                    <div class="price">0元起</div>
+                    <div class="desc">前期0费用，获奖后分成50%，T+3结算</div>
+                </div>
+                <div class="mode-card" onclick="selectMode('annual')">
+                    <h4>💎 年费订阅</h4>
+                    <div class="price">7999元/年</div>
+                    <div class="desc">获奖奖金100%归学生，无分成</div>
+                </div>
+            </div>
+
+            <button class="confirm-btn" onclick="confirmAgreement()">
+                ✅ 确认协议并进入仪表盘
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>请与导师沟通确认后，共同制定你的专属SOP路线图</p>
+            <p style="margin-top: 4px; font-size: 0.75rem;">笨猫丫丫OPC · 外表笨笨，内核聪明</p>
+        </div>
+    </div>
+
+    <script>
+        let selectedMode = null;
+
+        function selectMode(mode) {
+            selectedMode = mode;
+            document.querySelectorAll('.mode-card').forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function sendEmail() {
+            alert('即将打开邮件客户端，预填导师邮箱：liming@yayasmart.com');
+        }
+
+        function copyWechat() {
+            navigator.clipboard.writeText('yayasmart_mentor_liming');
+            alert('已复制微信号：yayasmart_mentor_liming');
+        }
+
+        function copyMeeting() {
+            navigator.clipboard.writeText('会议号：888-666-999 密码：123456');
+            alert('已复制会议信息：\n会议号：888-666-999\n密码：123456');
+        }
+
+        function confirmAgreement() {
+            if (!selectedMode) {
+                alert('请先选择合作模式！');
+                return;
+            }
+            alert(`已选择「${selectedMode === 'bet' ? '对赌分成' : '年费订阅'}」模式\n\n即将进入个人仪表盘，请与导师沟通确认SOP路线图。`);
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

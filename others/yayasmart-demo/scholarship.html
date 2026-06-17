@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 奖学金中心</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg-light);
+            min-height: 100vh;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 14px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 10px; }
+        header img { width: 36px; height: 36px; border-radius: 8px; }
+        header h1 { font-size: 1.15rem; font-weight: 600; }
+        header .back-btn { color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            padding: 32px 24px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .hero .title { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+        .hero .subtitle { font-size: 0.95rem; opacity: 0.9; }
+        .hero .hero-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: auto;
+            opacity: 0.7;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+        }
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .section-header h3 { font-size: 1.15rem; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .section-header a { font-size: 0.85rem; color: var(--brand-primary); }
+
+        .scholarship-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .scholarship-item {
+            display: flex;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .scholarship-item:hover { transform: translateX(4px); background: rgba(0,85,83,0.05); }
+        .scholarship-item .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 16px;
+        }
+        .scholarship-item .icon.gold { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
+        .scholarship-item .icon.silver { background: linear-gradient(135deg, #E2E8F0, #CBD5E1); }
+        .scholarship-item .icon.bronze { background: linear-gradient(135deg, #FEF3C7, #FCD34D); }
+        .scholarship-item .content {
+            flex: 1;
+        }
+        .scholarship-item .content .name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+        .scholarship-item .content .desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .scholarship-item .content .meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .scholarship-item .amount {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--brand-accent);
+        }
+        .scholarship-item .deadline {
+            font-size: 0.75rem;
+            color: #F59E0B;
+            text-align: right;
+        }
+
+        .application-history {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .application-history th, .application-history td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .application-history th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .status-badge.pending { background: #FEF3C7; color: #B45309; }
+        .status-badge.approved { background: #D1FAE5; color: #059669; }
+        .status-badge.rejected { background: #FEE2E2; color: #DC2626; }
+
+        .btn {
+            display: inline-flex;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+        }
+        .btn-primary:hover { box-shadow: 0 4px 15px rgba(0,85,83,0.3); }
+
+        @media (max-width: 600px) {
+            .stats-row { grid-template-columns: 1fr; }
+            .scholarship-item { flex-direction: column; }
+            .scholarship-item .icon { margin-bottom: 12px; margin-right: 0; }
+            .scholarship-item .amount { margin-top: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="dashboard.html" class="back-btn">← 返回</a>
+            <div class="logo">
+                <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+                <h1>奖学金中心</h1>
+            </div>
+            <div style="width: 50px;"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <img src="yayasmart-logo-all/yayasmart-1-cat-FFFFFF.png" class="hero-logo" alt="笨猫丫丫">
+            <div class="title">🎓 奖学金申请中心</div>
+            <div class="subtitle">发现并申请适合你的奖学金机会</div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card"><div class="value">¥12,800</div><div class="label">累计获得奖学金</div></div>
+            <div class="stat-card"><div class="value">5</div><div class="label">申请次数</div></div>
+            <div class="stat-card"><div class="value">3</div><div class="label">获奖次数</div></div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h3>💰 可申请奖学金</h3>
+                <a href="#">查看全部 →</a>
+            </div>
+            <div class="scholarship-list">
+                <div class="scholarship-item" onclick="applyScholarship('national')">
+                    <div class="icon gold">🏆</div>
+                    <div class="content">
+                        <div class="name">国家奖学金</div>
+                        <div class="desc">面向品学兼优的本科生，覆盖学费及生活费</div>
+                        <div class="meta">
+                            <span>截止日期: 2024-04-30</span>
+                            <span>名额: 50人</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="amount">¥8,000</div>
+                        <div class="deadline">仅剩45天</div>
+                    </div>
+                </div>
+                <div class="scholarship-item" onclick="applyScholarship('school')">
+                    <div class="icon silver">🥈</div>
+                    <div class="content">
+                        <div class="name">校级一等奖学金</div>
+                        <div class="desc">综合成绩排名前5%的优秀学生</div>
+                        <div class="meta">
+                            <span>截止日期: 2024-04-15</span>
+                            <span>名额: 100人</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="amount">¥5,000</div>
+                        <div class="deadline">仅剩30天</div>
+                    </div>
+                </div>
+                <div class="scholarship-item" onclick="applyScholarship('enterprise')">
+                    <div class="icon bronze">🥉</div>
+                    <div class="content">
+                        <div class="name">企业专项奖学金</div>
+                        <div class="desc">笨猫丫丫OPC设立，面向计算机相关专业</div>
+                        <div class="meta">
+                            <span>截止日期: 2024-05-15</span>
+                            <span>名额: 20人</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="amount">¥3,000</div>
+                        <div class="deadline">仅剩60天</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h3>📋 申请记录</h3>
+            </div>
+            <table class="application-history">
+                <thead>
+                    <tr>
+                        <th>奖学金名称</th>
+                        <th>申请时间</th>
+                        <th>金额</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>校级一等奖学金</td>
+                        <td>2024-03-10</td>
+                        <td>¥5,000</td>
+                        <td><span class="status-badge pending">审核中</span></td>
+                        <td><button style="padding: 5px 12px; border: none; background: #F1F5F9; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">查看</button></td>
+                    </tr>
+                    <tr>
+                        <td>企业专项奖学金</td>
+                        <td>2024-02-15</td>
+                        <td>¥3,000</td>
+                        <td><span class="status-badge approved">已通过</span></td>
+                        <td><button style="padding: 5px 12px; border: none; background: #F1F5F9; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">详情</button></td>
+                    </tr>
+                    <tr>
+                        <td>国家奖学金</td>
+                        <td>2023-10-08</td>
+                        <td>¥8,000</td>
+                        <td><span class="status-badge rejected">未通过</span></td>
+                        <td><button style="padding: 5px 12px; border: none; background: #F1F5F9; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">查看原因</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-top: 32px;">
+            <button class="btn btn-primary" onclick="startApply()">开始申请奖学金</button>
+        </div>
+    </div>
+
+    <script>
+        function applyScholarship(type) {
+            const scholarships = {
+                national: '国家奖学金',
+                school: '校级一等奖学金',
+                enterprise: '企业专项奖学金'
+            };
+            alert(`即将申请「${scholarships[type]}」...`);
+        }
+        function startApply() {
+            alert('即将跳转到奖学金申请向导...');
+        }
+    </script>
+</body>
+</html>

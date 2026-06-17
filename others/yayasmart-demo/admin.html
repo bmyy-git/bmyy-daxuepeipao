@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 系统管理</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            display: flex;
+        }
+        a { text-decoration: none; }
+
+        .sidebar {
+            width: 240px;
+            background: var(--nav-bg);
+            color: white;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-header img { width: 36px; height: 36px; border-radius: 8px; }
+        .sidebar-header h1 { font-size: 1rem; font-weight: 600; }
+
+        .nav-section { margin-bottom: 24px; }
+        .nav-section .title {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding-left: 8px;
+        }
+        .nav-section ul { list-style: none; padding: 0; }
+        .nav-section li { margin-bottom: 4px; }
+        .nav-section a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        .nav-section a:hover, .nav-section a.active {
+            background: rgba(0,85,83,0.3);
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+        .page-title h2 { font-size: 1.4rem; color: var(--text-dark); }
+        .page-title p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .header-actions { display: flex; gap: 10px; }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary { background: var(--brand-primary); color: white; }
+        .btn-primary:hover { background: #007570; }
+        .btn-secondary { background: #F1F5F9; color: var(--text-dark); }
+        .btn-secondary:hover { background: #E2E8F0; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+        }
+        .stat-card .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .stat-card .icon.users { background: #DBEAFE; }
+        .stat-card .icon.mentors { background: #D1FAE5; }
+        .stat-card .icon.tasks { background: #EDE9FE; }
+        .stat-card .icon.income { background: #FEF3C7; }
+        .stat-card .value { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); }
+        .stat-card .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .section-header h3 { font-size: 1rem; color: var(--text-dark); display: flex; align-items: center; gap: 6px; }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .search-bar select {
+            padding: 10px 12px;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: white;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .data-table th, .data-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .data-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .data-table tr:hover { background: #F8FAFC; }
+        .role-badge {
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .role-badge.student { background: #DBEAFE; color: #1D4ED8; }
+        .role-badge.mentor { background: #D1FAE5; color: #059669; }
+        .role-badge.admin { background: #FEF3C7; color: #B45309; }
+        .role-badge.super { background: #FEE2E2; color: #DC2626; }
+        .action-btns { display: flex; gap: 6px; }
+        .action-btns button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .action-btns .view { background: #F1F5F9; color: var(--text-dark); }
+        .action-btns .view:hover { background: #E2E8F0; }
+        .action-btns .edit { background: #FEF3C7; color: #B45309; }
+        .action-btns .edit:hover { background: #FDE68A; }
+        .action-btns .delete { background: #FEE2E2; color: #DC2626; }
+        .action-btns .delete:hover { background: #FECACA; }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .pagination button {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        .pagination button:hover, .pagination button.active {
+            background: var(--brand-primary);
+            border-color: var(--brand-primary);
+            color: white;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; position: relative; }
+            .main-content { margin-left: 0; padding: 12px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+            <h1>系统管理</h1>
+        </div>
+        
+        <div class="nav-section">
+            <div class="title">数据概览</div>
+            <ul>
+                <li><a href="#" class="active"><span>📊</span> 仪表盘</a></li>
+                <li><a href="#"><span>📈</span> 数据分析</a></li>
+                <li><a href="#"><span>📉</span> 财务报表</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <div class="title">用户管理</div>
+            <ul>
+                <li><a href="#"><span>👥</span> 学生管理</a></li>
+                <li><a href="#"><span>👨‍🏫</span> 导师管理</a></li>
+                <li><a href="#"><span>🛡️</span> 权限设置</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <div class="title">系统配置</div>
+            <ul>
+                <li><a href="#"><span>⚙️</span> 系统设置</a></li>
+                <li><a href="#"><span>🔔</span> 通知管理</a></li>
+                <li><a href="#"><span>📦</span> 版本管理</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section">
+            <div class="title">安全</div>
+            <ul>
+                <li><a href="#"><span>🔒</span> 日志审计</a></li>
+                <li><a href="#"><span>🚨</span> 异常告警</a></li>
+            </ul>
+        </div>
+        
+        <div class="nav-section" style="margin-top: auto;">
+            <ul>
+                <li><a href="index.html"><span>🏠</span> 返回首页</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div class="page-title">
+                <h2>系统管理中心</h2>
+                <p>超级管理员 · 数据统计概览</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary">导出数据</button>
+                <button class="btn btn-primary">系统备份</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon users">👥</div>
+                <div class="value">12,456</div>
+                <div class="label">注册学生</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon mentors">👨‍🏫</div>
+                <div class="value">328</div>
+                <div class="label">认证导师</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon tasks">✅</div>
+                <div class="value">89,234</div>
+                <div class="label">完成任务</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon income">💰</div>
+                <div class="value">¥2.8M</div>
+                <div class="label">累计营收</div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h3>👥 活跃用户列表</h3>
+                <button class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;">新增用户</button>
+            </div>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="搜索用户ID、姓名、手机号...">
+                <select>
+                    <option>全部角色</option>
+                    <option>学生</option>
+                    <option>导师</option>
+                    <option>管理员</option>
+                    <option>超级管理员</option>
+                </select>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>用户ID</th>
+                        <th>姓名</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>FF40-0001</td><td>系统管理员</td><td><span class="role-badge super">超级管理员</span></td><td>🟢 在线</td><td>2024-01-01</td><td><div class="action-btns"><button class="view">查看</button><button class="edit">编辑</button><button class="delete">删除</button></div></td></tr>
+                    <tr><td>FF30-0023</td><td>专属客服A</td><td><span class="role-badge admin">专属客服</span></td><td>🟢 在线</td><td>2024-02-15</td><td><div class="action-btns"><button class="view">查看</button><button class="edit">编辑</button><button class="delete">删除</button></div></td></tr>
+                    <tr><td>F000-1234</td><td>李明博士</td><td><span class="role-badge mentor">导师</span></td><td>🟢 在线</td><td>2024-03-01</td><td><div class="action-btns"><button class="view">查看</button><button class="edit">编辑</button><button class="delete">删除</button></div></td></tr>
+                    <tr><td>0000-5678</td><td>张三</td><td><span class="role-badge student">学生</span></td><td>🟢 在线</td><td>2024-03-10</td><td><div class="action-btns"><button class="view">查看</button><button class="edit">编辑</button><button class="delete">删除</button></div></td></tr>
+                    <tr><td>0000-5679</td><td>李四</td><td><span class="role-badge student">学生</span></td><td>🔴 离线</td><td>2024-03-11</td><td><div class="action-btns"><button class="view">查看</button><button class="edit">编辑</button><button class="delete">删除</button></div></td></tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <button>‹</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <button>5</button>
+                <button>›</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

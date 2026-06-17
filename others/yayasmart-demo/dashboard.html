@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 个人仪表盘</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+            --warning: #F59E0B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 12px; }
+        header img { width: 40px; height: 40px; border-radius: 10px; }
+        header h1 { font-size: 1.25rem; font-weight: 600; }
+        header .user { display: flex; align-items: center; gap: 12px; }
+        header .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .stat-icon.blue { background: #DBEAFE; }
+        .stat-icon.green { background: #D1FAE5; }
+        .stat-icon.purple { background: #EDE9FE; }
+        .stat-icon.orange { background: #FEF3C7; }
+        .stat-info .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .stat-info .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header a {
+            font-size: 0.875rem;
+            color: var(--brand-primary);
+            font-weight: 500;
+        }
+
+        .sop-timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        .sop-timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--brand-primary), #E2E8F0);
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .timeline-item:last-child { margin-bottom: 0; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--brand-primary);
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .timeline-item.current::before {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0,85,83,0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(0,85,83,0); }
+        }
+        .timeline-card {
+            padding: 16px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .timeline-item.current .timeline-card {
+            background: rgba(0,85,83,0.05);
+            border: 1px solid var(--brand-primary);
+        }
+        .timeline-card .title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .timeline-card .desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .timeline-card .progress {
+            margin-top: 12px;
+            height: 6px;
+            background: #E2E8F0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .timeline-card .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-primary), #007570);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .tasks-list {
+            display: grid;
+            gap: 12px;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .task-item:hover { background: #F1F5F9; }
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            border: 2px solid #E2E8F0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .task-checkbox.checked {
+            background: var(--brand-primary);
+            border-color: var(--brand-primary);
+        }
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 0.8rem;
+        }
+        .task-content {
+            flex: 1;
+        }
+        .task-content .title {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+        .task-content .deadline {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .task-content .deadline.urgent {
+            color: var(--warning);
+            font-weight: 500;
+        }
+        .task-priority {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+        .task-priority.high { background: #FEE2E2; color: #DC2626; }
+        .task-priority.medium { background: #FEF3C7; color: #B45309; }
+        .task-priority.low { background: #D1FAE5; color: #059669; }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+        }
+        .badge-item {
+            text-align: center;
+            padding: 20px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .badge-item:hover { transform: translateY(-2px); }
+        .badge-item.locked { opacity: 0.5; }
+        .badge-item .icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .badge-item.locked .icon { filter: grayscale(100%); }
+        .badge-item .name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .badge-item .desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .bonus-section {
+            background: linear-gradient(135deg, rgba(0,85,83,0.05), rgba(139,92,246,0.05));
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .bonus-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .bonus-header h2 {
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .bonus-amount {
+            text-align: center;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 12px;
+        }
+        .bonus-amount .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .bonus-amount .value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 16px;
+        }
+        .bonus-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,85,83,0.3); }
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-dark);
+            border: 2px solid #E2E8F0;
+        }
+        .btn-secondary:hover { border-color: var(--brand-primary); }
+
+        .drawer {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            z-index: 200;
+            padding: 24px;
+            overflow-y: auto;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+        }
+        .drawer.active { display: block; }
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .drawer-header h3 { font-size: 1.25rem; color: var(--text-dark); }
+        .drawer-close { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .asset-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .asset-item:last-child { border-bottom: none; }
+        .asset-item .label { color: var(--text-muted); }
+        .asset-item .value { font-weight: 600; color: var(--text-dark); }
+
+        @media (max-width: 640px) {
+            header h1 { font-size: 1rem; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .stat-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+            .stat-info .value { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+            <h1>笨猫丫丫OPC</h1>
+        </div>
+        <div class="user">
+            <span style="font-size: 0.875rem;">张同学</span>
+            <div class="user-avatar">👤</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon blue">🎯</div>
+                <div class="stat-info">
+                    <div class="value">65%</div>
+                    <div class="label">SOP完成度</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div class="stat-info">
+                    <div class="value">8/12</div>
+                    <div class="label">本周任务</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple">🏆</div>
+                <div class="stat-info">
+                    <div class="value">12</div>
+                    <div class="label">荣誉徽章</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">💰</div>
+                <div class="stat-info">
+                    <div class="value">¥2,800</div>
+                    <div class="label">累计奖金</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>🗺️ SOP通关地图</h2>
+                <a href="#">查看完整路线图 →</a>
+            </div>
+            <div class="sop-timeline">
+                <div class="timeline-item current">
+                    <div class="timeline-card">
+                        <div class="title">大一上学期 · 基础夯实</div>
+                        <div class="desc">高等数学、英语四级、计算机基础</div>
+                        <div class="progress"><div class="progress-bar" style="width: 75%"></div></div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-card">
+                        <div class="title">大一下学期 · 技能提升</div>
+                        <div class="desc">数据结构、英语六级、算法入门</div>
+                        <div class="progress"><div class="progress-bar" style="width: 40%"></div></div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-card">
+                        <div class="title">大二上学期 · 专业深入</div>
+                        <div class="desc">操作系统、计算机网络、科研入门</div>
+                        <div class="progress"><div class="progress-bar" style="width: 10%"></div></div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-card">
+                        <div class="title">大二下学期 · 竞赛冲刺</div>
+                        <div class="desc">ACM/ICPC、数学建模、专利申请</div>
+                        <div class="progress"><div class="progress-bar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-card">
+                        <div class="title">大三 · 保研准备</div>
+                        <div class="desc">夏令营、预推免、导师联系</div>
+                        <div class="progress"><div class="progress-bar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>📝 本周任务清单</h2>
+                <a href="#">查看全部 →</a>
+            </div>
+            <div class="tasks-list">
+                <div class="task-item">
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="title">完成数据结构第三章作业</div>
+                        <div class="deadline urgent">⏰ 明天截止</div>
+                    </div>
+                    <span class="task-priority high">高</span>
+                </div>
+                <div class="task-item">
+                    <div class="task-checkbox checked" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="title">背单词50个</div>
+                        <div class="deadline">已完成</div>
+                    </div>
+                    <span class="task-priority low">低</span>
+                </div>
+                <div class="task-item">
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="title">参加算法竞赛模拟赛</div>
+                        <div class="deadline urgent">⏰ 周五截止</div>
+                    </div>
+                    <span class="task-priority high">高</span>
+                </div>
+                <div class="task-item">
+                    <div class="task-checkbox" onclick="toggleTask(this)"></div>
+                    <div class="task-content">
+                        <div class="title">与导师沟通SOP修改意见</div>
+                        <div class="deadline">⏰ 本周内</div>
+                    </div>
+                    <span class="task-priority medium">中</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bonus-section">
+            <div class="bonus-header">
+                <h2>💰 奖金账户</h2>
+                <a href="#" onclick="openAssetDrawer()">查看详情 →</a>
+            </div>
+            <div class="bonus-amount">
+                <div class="label">累计奖金</div>
+                <div class="value">¥2,800</div>
+                <div class="bonus-actions">
+                    <button class="btn btn-primary" onclick="openPayment()">确认分润/去支付</button>
+                    <button class="btn btn-secondary">查看流水</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>🏅 荣誉徽章</h2>
+                <a href="#">查看全部 →</a>
+            </div>
+            <div class="badge-grid">
+                <div class="badge-item"><div class="icon">🔥</div><div class="name">连续打卡30天</div><div class="desc">已获得</div></div>
+                <div class="badge-item"><div class="icon">💯</div><div class="name">满分学霸</div><div class="desc">已获得</div></div>
+                <div class="badge-item"><div class="icon">⚡</div><div class="name">算法达人</div><div class="desc">已获得</div></div>
+                <div class="badge-item"><div class="icon">🎖️</div><div class="name">竞赛获奖</div><div class="desc">已获得</div></div>
+                <div class="badge-item locked"><div class="icon">🏆</div><div class="name">保研成功</div><div class="desc">进行中</div></div>
+                <div class="badge-item locked"><div class="icon">📄</div><div class="name">论文发表</div><div class="desc">未解锁</div></div>
+                <div class="badge-item locked"><div class="icon">🌟</div><div class="name">优秀毕业生</div><div class="desc">未解锁</div></div>
+                <div class="badge-item locked"><div class="icon">👑</div><div class="name">大满贯</div><div class="desc">未解锁</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="drawer" id="assetDrawer">
+        <div class="drawer-header">
+            <h3>💰 资产详情</h3>
+            <span class="drawer-close" onclick="closeDrawer()">×</span>
+        </div>
+        <div style="padding: 16px;">
+            <h4 style="font-size: 0.95rem; color: var(--text-dark); margin-bottom: 16px;">资金流水</h4>
+            <div class="asset-item"><div class="label">2024-03-15 数学建模奖金</div><div class="value">+¥1,500</div></div>
+            <div class="asset-item"><div class="label">2024-02-20 英语竞赛奖金</div><div class="value">+¥800</div></div>
+            <div class="asset-item"><div class="label">2024-01-10 奖学金</div><div class="value">+¥500</div></div>
+            <div class="asset-item"><div class="label">2023-12-05 首次打卡奖励</div><div class="value">+¥200</div></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTask(el) {
+            el.classList.toggle('checked');
+        }
+        function openAssetDrawer() {
+            document.getElementById('assetDrawer').classList.add('active');
+        }
+        function closeDrawer() {
+            document.getElementById('assetDrawer').classList.remove('active');
+        }
+        function openPayment() {
+            alert('即将跳转到支付收银台...\n\n当前累计奖金: ¥2,800\n对赌分成比例: 50%\n应支付平台: ¥1,400');
+        }
+    </script>
+</body>
+</html>

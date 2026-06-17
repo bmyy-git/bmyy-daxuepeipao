@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-benmaoyaya}
+      POSTGRES_USER: ${POSTGRES_USER:-benmaoyaya}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-benmaoyaya} -d ${POSTGRES_DB:-benmaoyaya}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      APP_PORT: 3000
+      WEB_ORIGIN: http://localhost:8080
+      DATABASE_URL: postgresql://${POSTGRES_USER:-benmaoyaya}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-benmaoyaya}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-replace-with-at-least-32-random-characters}
+      JWT_ACCESS_EXPIRES_IN: 2h
+      DIFY_API_BASE_URL: ${DIFY_API_BASE_URL:-}
+      DIFY_API_KEY: ${DIFY_API_KEY:-}
+      FILE_STORAGE_PATH: /app/uploads
+      MAX_FILE_SIZE_MB: 20
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:
+  uploads_data:

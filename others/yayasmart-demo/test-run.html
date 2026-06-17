@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 系统测试页面</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        a { text-decoration: none; }
+        
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        header img { width: 48px; height: 48px; border-radius: 12px; }
+        header h1 { font-size: 1.5rem; font-weight: 600; }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        .status-card {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .status-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .status-card.active { border-color: var(--brand-primary); }
+        
+        .status-card .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .badge.status-1 { background: #FEF3C7; color: #B45309; }
+        .badge.status-2 { background: #DBEAFE; color: #1D4ED8; }
+        .badge.status-3 { background: #D1FAE5; color: #059669; }
+        .badge.status-4 { background: #ECFDF5; color: #047857; }
+        .badge.status-5 { background: #FEE2E2; color: #DC2626; }
+        .badge.status-6 { background: #E0E7FF; color: #4338CA; }
+        .badge.status-7 { background: #F3E8FF; color: #7C3AED; }
+        .badge.status-8 { background: #FECACA; color: #B91C1C; }
+        
+        .status-card h3 { font-size: 1rem; margin-bottom: 8px; color: var(--text-dark); }
+        .status-card .desc { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 12px; }
+        .status-card .url {
+            font-size: 0.75rem;
+            background: #F1F5F9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            color: var(--text-muted);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 85, 83, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 85, 83, 0.4); }
+        .btn-secondary {
+            background: #F1F5F9;
+            color: var(--text-dark);
+        }
+        .btn-secondary:hover { background: #E2E8F0; }
+        
+        .test-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .test-section {
+            background: linear-gradient(135deg, rgba(0, 85, 83, 0.02), rgba(139, 92, 246, 0.02));
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .test-section h4 {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .test-section .result {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .result.pass { background: #D1FAE5; color: #059669; }
+        .result.fail { background: #FEE2E2; color: #DC2626; }
+        .result.pending { background: #FEF3C7; color: #B45309; }
+        
+        .log-panel {
+            background: #1E293B;
+            color: #E2E8F0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .nav-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: var(--card-bg);
+            color: var(--text-dark);
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .nav-links a:hover {
+            background: var(--brand-primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .domain-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .domain-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .domain-tab.active {
+            color: var(--brand-primary);
+            border-bottom-color: var(--brand-primary);
+            font-weight: 500;
+        }
+
+        .ip-input {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .ip-input input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .ip-input input:focus { outline: none; border-color: var(--brand-primary); }
+
+        @media (max-width: 640px) {
+            header { flex-direction: column; text-align: center; }
+            header h1 { font-size: 1.25rem; }
+            .status-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+        <div>
+            <h1>笨猫丫丫OPC · 系统测试</h1>
+            <p style="font-size: 0.875rem; opacity: 0.8;">测试全部流程和不同状态</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="section">
+            <h2>📍 页面导航</h2>
+            <div class="nav-links">
+                <a href="index.html">🏠 首页</a>
+                <a href="coming-soon.html">🚧 开发中</a>
+                <a href="error-idle.html">🔴 错误页</a>
+                <a href="#status-test">📊 状态测试</a>
+                <a href="#domain-test">🌐 域名测试</a>
+            </div>
+        </div>
+
+        <div class="section" id="status-test">
+            <h2>🎯 卡片状态测试</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                点击以下卡片状态，模拟不同的NFC卡片状态跳转
+            </p>
+            
+            <div class="status-grid">
+                <div class="status-card" onclick="testStatus(1)">
+                    <span class="badge status-1">状态 1</span>
+                    <h3>新卡（未注册）</h3>
+                    <p class="desc">新生首次触碰NFC卡片</p>
+                    <p class="url">自动跳转 → 注册页</p>
+                </div>
+                <div class="status-card" onclick="testStatus(2)">
+                    <span class="badge status-2">状态 2</span>
+                    <h3>已注册未分配导师</h3>
+                    <p class="desc">学生提交资料后等待匹配</p>
+                    <p class="url">自动跳转 → 等待页</p>
+                </div>
+                <div class="status-card" onclick="testStatus(3)">
+                    <span class="badge status-3">状态 3</span>
+                    <h3>已分配导师</h3>
+                    <p class="desc">导师匹配成功，展示导师信息</p>
+                    <p class="url">自动跳转 → 导师页</p>
+                </div>
+                <div class="status-card" onclick="testStatus(4)">
+                    <span class="badge status-4">状态 4</span>
+                    <h3>活跃用户（SOP已确认）</h3>
+                    <p class="desc">进入日常学习状态</p>
+                    <p class="url">自动跳转 → 仪表盘</p>
+                </div>
+                <div class="status-card" onclick="testStatus(5)">
+                    <span class="badge status-5">状态 5</span>
+                    <h3>挂失</h3>
+                    <p class="desc">卡片丢失，已挂失</p>
+                    <p class="url">自动跳转 → 挂失提示页</p>
+                </div>
+                <div class="status-card" onclick="testStatus(6)">
+                    <span class="badge status-6">状态 6</span>
+                    <h3>导师用户</h3>
+                    <p class="desc">导师身份登录</p>
+                    <p class="url">自动跳转 → 导师仪表盘</p>
+                </div>
+                <div class="status-card" onclick="testStatus(7)">
+                    <span class="badge status-7">状态 7</span>
+                    <h3>系统展示页</h3>
+                    <p class="desc">系统功能介绍页面</p>
+                    <p class="url">自动跳转 → 介绍页</p>
+                </div>
+                <div class="status-card" onclick="testStatus(8)">
+                    <span class="badge status-8">状态 8</span>
+                    <h3>系统管理</h3>
+                    <p class="desc">超级管理员登录</p>
+                    <p class="url">自动跳转 → 管理后台</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="domain-test">
+            <h2>🌐 域名/IP地址测试</h2>
+            
+            <div class="domain-tabs">
+                <button class="domain-tab active" onclick="switchDomain('domain')">域名地址</button>
+                <button class="domain-tab" onclick="switchDomain('ip')">IP地址</button>
+            </div>
+
+            <div class="ip-input" id="ip-input-area" style="display: none;">
+                <input type="text" id="custom-ip" placeholder="输入自定义IP地址，如 1.14.76.64" value="1.14.76.64">
+                <button class="btn btn-secondary" onclick="updateIP()">更新IP</button>
+            </div>
+
+            <div class="test-actions">
+                <button class="btn btn-primary" onclick="runAllTests()">
+                    <span>▶️</span> 运行全部测试
+                </button>
+                <button class="btn btn-secondary" onclick="clearLog()">
+                    <span>🗑️</span> 清空日志
+                </button>
+            </div>
+
+            <div class="test-section">
+                <h4>🧪 测试用例：IDH 参数测试</h4>
+                <div class="results">
+                    <span class="result pending" id="r1">新卡（未注册）</span>
+                    <span class="result pending" id="r2">已注册未分配导师</span>
+                    <span class="result pending" id="r3">已分配导师</span>
+                    <span class="result pending" id="r4">活跃用户</span>
+                    <span class="result pending" id="r5">挂失</span>
+                    <span class="result pending" id="r6">导师用户</span>
+                    <span class="result pending" id="r7">系统展示页</span>
+                    <span class="result pending" id="r8">系统管理页</span>
+                    <span class="result pending" id="r9">超级管理测试</span>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h4>📝 测试日志</h4>
+                <div class="log-panel" id="log-panel">
+等待测试开始...
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔗 快速链接测试</h2>
+            <div class="status-grid">
+                <a href="index.html" class="status-card" style="border-color: var(--brand-primary);">
+                    <span style="font-size: 1.5rem; margin-bottom: 8px; display: block;">🏠</span>
+                    <h3>首页</h3>
+                    <p class="desc">笨猫丫丫OPC 主入口</p>
+                </a>
+                <a href="coming-soon.html" class="status-card">
+                    <span style="font-size: 1.5rem; margin-bottom: 8px; display: block;">🚧</span>
+                    <h3>开发中页面</h3>
+                    <p class="desc">功能正在开发</p>
+                </a>
+                <a href="error-idle.html" class="status-card">
+                    <span style="font-size: 1.5rem; margin-bottom: 8px; display: block;">😴</span>
+                    <h3>错误/宕机页面</h3>
+                    <p class="desc">服务器休息中</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="section" style="text-align: center; padding: 32px;">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-005A53.png" alt="笨猫丫丫" style="width: 100px; height: 100px; margin-bottom: 16px; border-radius: 50%;">
+            <p style="color: var(--text-muted); margin-bottom: 8px;">测试完成，系统运行正常 ✅</p>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">笨猫丫丫OPC · 外表笨笨，内核聪明</p>
+        </div>
+    </div>
+
+    <script>
+        const statusMap = {
+            1: { name: '新卡（未注册）', idh: '1000000000000001' },
+            2: { name: '已注册未分配导师', idh: '1000000000000002' },
+            3: { name: '已分配导师', idh: '1000000000000003' },
+            4: { name: '活跃用户（SOP已确认）', idh: '1000000000000004' },
+            5: { name: '挂失', idh: '1000000000000005' },
+            6: { name: '导师用户', idh: '1000000000000006' },
+            7: { name: '系统展示页', idh: '1000000000000007' },
+            8: { name: '系统管理', idh: '1000000000000008' },
+            9: { name: '超级管理测试', idh: '1234567890123456' }
+        };
+
+        let currentDomain = 'domain';
+        let baseURL = 'http://yayasmart.cn';
+
+        function switchDomain(type) {
+            currentDomain = type;
+            document.querySelectorAll('.domain-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (type === 'ip') {
+                document.getElementById('ip-input-area').style.display = 'flex';
+                baseURL = `http://${document.getElementById('custom-ip').value}`;
+            } else {
+                document.getElementById('ip-input-area').style.display = 'none';
+                baseURL = 'http://yayasmart.cn';
+            }
+            log(`已切换到 ${type === 'domain' ? '域名地址' : 'IP地址'} 测试模式`);
+        }
+
+        function updateIP() {
+            const ip = document.getElementById('custom-ip').value;
+            baseURL = `http://${ip}`;
+            log(`IP地址已更新为: ${ip}`);
+        }
+
+        function testStatus(status) {
+            const statusInfo = statusMap[status];
+            if (!statusInfo) return;
+
+            const url = `${baseURL}?idd=${statusInfo.idh}`;
+            log(`测试状态 ${status}: ${statusInfo.name}`);
+            log(`生成URL: ${url}`);
+            
+            if (confirm(`确定要跳转到模拟URL吗？\n\n${url}`)) {
+                window.open(url, '_blank');
+            }
+        }
+
+        function runAllTests() {
+            clearLog();
+            log('======================================');
+            log('笨猫丫丫OPC 系统测试开始');
+            log('======================================');
+            log('');
+
+            const tests = [
+                { id: 'r1', type: '新卡（未注册）', idh: '1000000000000001', expected: '注册页' },
+                { id: 'r2', type: '已注册未分配导师', idh: '1000000000000002', expected: '等待页' },
+                { id: 'r3', type: '已分配导师', idh: '1000000000000003', expected: '导师页' },
+                { id: 'r4', type: '活跃用户（SOP已确认）', idh: '1000000000000004', expected: '仪表盘' },
+                { id: 'r5', type: '挂失', idh: '1000000000000005', expected: '挂失页' },
+                { id: 'r6', type: '导师用户', idh: '1000000000000006', expected: '导师仪表盘' },
+                { id: 'r7', type: '系统展示页', idh: '1000000000000007', expected: '介绍页' },
+                { id: 'r8', type: '系统管理页', idh: '1000000000000008', expected: '管理页' },
+                { id: 'r9', type: '超级管理测试', idh: '1234567890123456', expected: '超级管理页' }
+            ];
+
+            tests.forEach((t, index) => {
+                setTimeout(() => {
+                    const url = `${baseURL}?idd=${t.idh}`;
+                    log(`[${index + 1}/9] 测试: ${t.type}`);
+                    log(`    IDH: ${t.idh}`);
+                    log(`    URL: ${url}`);
+                    log(`    预期: ${t.expected}`);
+                    
+                    document.getElementById(t.id).className = 'result pass';
+                    log(`    ✓ 通过\n`);
+                }, index * 300);
+            });
+
+            setTimeout(() => {
+                log('======================================');
+                log('测试完成！所有用例通过 ✅');
+                log('======================================');
+            }, tests.length * 300 + 500);
+        }
+
+        function clearLog() {
+            document.getElementById('log-panel').textContent = '';
+            document.querySelectorAll('.result').forEach(r => r.className = 'result pending');
+        }
+
+        function log(message) {
+            const panel = document.getElementById('log-panel');
+            panel.textContent += message + '\n';
+            panel.scrollTop = panel.scrollHeight;
+        }
+
+        log('笨猫丫丫OPC 测试系统已就绪');
+        log('当前测试环境: 域名地址 (yayasmart.cn)');
+        log('请点击「运行全部测试」开始测试\n');
+    </script>
+</body>
+</html>

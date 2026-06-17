@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>站点地图 - 笨猫丫丫OPC</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --brand-dark: #1E293B;
+            --brand-muted: #64748B;
+            --bg-light: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 85, 83, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-light);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            padding: 32px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '🐱';
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.1;
+        }
+
+        .header-logo {
+            width: 56px;
+            height: 56px;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--brand-dark);
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: rgba(0, 85, 83, 0.05);
+            border-radius: 12px;
+        }
+
+        .section-title span {
+            width: 32px;
+            height: 32px;
+            background: var(--brand-primary);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .flow-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(0, 85, 83, 0.2);
+        }
+
+        .flow-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .flow-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .flow-link {
+            display: block;
+            font-weight: 500;
+            color: var(--brand-dark);
+            text-decoration: none;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .flow-link:hover {
+            color: var(--brand-primary);
+            text-decoration: underline;
+        }
+
+        .flow-desc {
+            font-size: 0.8rem;
+            color: var(--brand-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .flow-badge {
+            padding: 4px 10px;
+            background: rgba(0, 85, 83, 0.08);
+            color: var(--brand-primary);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .card-item {
+            padding: 14px 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .card-item:hover {
+            box-shadow: var(--shadow-md);
+            border-color: rgba(0, 85, 83, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .card-link {
+            display: block;
+            font-weight: 500;
+            color: var(--brand-dark);
+            text-decoration: none;
+            margin-bottom: 4px;
+        }
+
+        .card-link:hover {
+            color: var(--brand-primary);
+        }
+
+        .card-desc {
+            font-size: 0.75rem;
+            color: var(--brand-muted);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px 20px;
+            color: var(--brand-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 48px;
+        }
+
+        .footer span {
+            color: var(--brand-primary);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--brand-muted);
+            margin-top: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 1.4rem;
+            }
+
+            .stats-bar {
+                gap: 16px;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫" class="header-logo">
+        <h1 class="header-title">站点地图</h1>
+        <p class="header-desc">笨猫丫丫OPC · 外表笨笨，内核聪明</p>
+    </header>
+
+    <main class="container">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value">17</div>
+                <div class="stat-label">页面总数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">4</div>
+                <div class="stat-label">业务模块</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">100%</div>
+                <div class="stat-label">覆盖率</div>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="section-title">
+                <span>01</span>
+                <span>核心业务流程</span>
+            </div>
+            <div class="flow-container">
+                <div class="flow-item">
+                    <div class="flow-number">1</div>
+                    <div class="flow-content">
+                        <a href="index.html" class="flow-link">首页</a>
+                        <div class="flow-desc">主入口 · 产品介绍 · 核心功能展示</div>
+                    </div>
+                    <span class="flow-badge">首页</span>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-number">2</div>
+                    <div class="flow-content">
+                        <a href="register.html" class="flow-link">注册页</a>
+                        <div class="flow-desc">用户注册 · 账号创建</div>
+                    </div>
+                    <span class="flow-badge">转化</span>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-number">3</div>
+                    <div class="flow-content">
+                        <a href="profile.html" class="flow-link">个人中心</a>
+                        <div class="flow-desc">用户信息 · 学习进度 · 资料管理</div>
+                    </div>
+                    <span class="flow-badge">用户</span>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-number">4</div>
+                    <div class="flow-content">
+                        <a href="calendar.html" class="flow-link">日程日历</a>
+                        <div class="flow-desc">预约管理 · 日程安排 · 提醒设置</div>
+                    </div>
+                    <span class="flow-badge">功能</span>
+                </div>
+                <div class="flow-item">
+                    <div class="flow-number">5</div>
+                    <div class="flow-content">
+                        <a href="dashboard.html" class="flow-link">学习仪表盘</a>
+                        <div class="flow-desc">数据概览 · 学习统计 · 成长曲线</div>
+                    </div>
+                    <span class="flow-badge">数据</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>02</span>
+                <span>导师体系</span>
+            </div>
+            <div class="card-grid">
+                <div class="card-item">
+                    <a href="mentor.html" class="card-link">👨‍🏫 导师详情</a>
+                    <div class="card-desc">导师介绍 · 擅长领域 · 预约方式</div>
+                </div>
+                <div class="card-item">
+                    <a href="mentor-dashboard.html" class="card-link">📊 导师工作台</a>
+                    <div class="card-desc">导师端管理 · 预约处理 · 课程记录</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>03</span>
+                <span>消息通知</span>
+            </div>
+            <div class="card-grid">
+                <div class="card-item">
+                    <a href="messages.html" class="card-link">💬 消息中心</a>
+                    <div class="card-desc">系统通知 · 私信消息 · 互动消息</div>
+                </div>
+                <div class="card-item">
+                    <a href="waiting.html" class="card-link">⏳ 等待页</a>
+                    <div class="card-desc">加载等待 · 状态过渡</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>04</span>
+                <span>管理后台</span>
+            </div>
+            <div class="card-grid">
+                <div class="card-item">
+                    <a href="admin.html" class="card-link">⚙️ 系统管理</a>
+                    <div class="card-desc">管理员入口 · 系统配置 · 数据管理</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>05</span>
+                <span>产品展示</span>
+            </div>
+            <div class="card-grid">
+                <div class="card-item">
+                    <a href="skills.html" class="card-link">🚀 核心技能</a>
+                    <div class="card-desc">能力展示 · 产品亮点 · 技术优势</div>
+                </div>
+                <div class="card-item">
+                    <a href="scholarship.html" class="card-link">🎓 奖学金计划</a>
+                    <div class="card-desc">激励政策 · 学习奖励 · 荣誉体系</div>
+                </div>
+                <div class="card-item">
+                    <a href="marketing.html" class="card-link">📢 营销页面</a>
+                    <div class="card-desc">推广宣传 · 活动介绍 · 用户转化</div>
+                </div>
+                <div class="card-item">
+                    <a href="parent.html" class="card-link">👨‍👩‍👧 家长端</a>
+                    <div class="card-desc">家长视角 · 孩子学习 · 家校沟通</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>06</span>
+                <span>特殊页面</span>
+            </div>
+            <div class="card-grid">
+                <div class="card-item">
+                    <a href="coming-soon.html" class="card-link">🔜 即将上线</a>
+                    <div class="card-desc">新功能预告 · 倒计时 · 期待引导</div>
+                </div>
+                <div class="card-item">
+                    <a href="error-idle.html" class="card-link">😴 空闲错误页</a>
+                    <div class="card-desc">错误状态 · 趣味引导 · 重新激活</div>
+                </div>
+                <div class="card-item">
+                    <a href="test-run.html" class="card-link">🧪 测试运行</a>
+                    <div class="card-desc">功能测试 · 流程验证 · 调试入口</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">
+                <span>🔗</span>
+                <span>快速导航</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                <a href="index.html" class="quick-btn">首页</a>
+                <a href="register.html" class="quick-btn">注册</a>
+                <a href="profile.html" class="quick-btn">个人</a>
+                <a href="calendar.html" class="quick-btn">日历</a>
+                <a href="dashboard.html" class="quick-btn">数据</a>
+                <a href="mentor.html" class="quick-btn">导师</a>
+                <a href="messages.html" class="quick-btn">消息</a>
+                <a href="admin.html" class="quick-btn">管理</a>
+                <a href="skills.html" class="quick-btn">技能</a>
+                <a href="scholarship.html" class="quick-btn">奖学金</a>
+                <a href="coming-soon.html" class="quick-btn">上线</a>
+                <a href="error-idle.html" class="quick-btn">错误</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>笨猫丫丫OPC · <span>外表笨笨，内核聪明</span></p>
+        <p style="margin-top: 8px; font-size: 0.75rem;">共 17 个页面 · 站点地图 v1.0</p>
+    </footer>
+
+    <style>
+        .quick-btn {
+            padding: 8px 16px;
+            background: var(--card-bg);
+            color: var(--brand-dark);
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .quick-btn:hover {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-md);
+        }
+    </style>
+</body>
+</html>

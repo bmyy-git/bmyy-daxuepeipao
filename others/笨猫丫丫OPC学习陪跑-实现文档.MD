@@ -1011,7 +1011,7 @@ bonus.status_changed
 
 ### 15.6 静态资源实现
 
-将根目录资源复制或映射到前端 `public/img`、`public/mp4`，生产 URL 保持：
+将根目录资源复制或映射到前端 `apps/web/public/img`、`apps/web/public/mp4`，生产 URL 保持：
 
 ```text
 /img/yayasmart-logo-5A-FFFFFF.png
@@ -1039,7 +1039,7 @@ MotionFallback.vue
 
 `JourneyVideo.vue` 必须支持 `poster`、播放失败静态图、可见区域外暂停、低流量降级和 `prefers-reduced-motion`。
 
-源文件 `img/yayasmart-logo-1-1152 -928.png` 含不可见窄空格，构建时必须复制并规范化为 `public/img/yayasmart-logo-1-1152-928.png`，业务代码禁止引用原始特殊字符文件名。
+源文件 `img/yayasmart-logo-1-1152 -928.png` 含不可见窄空格，构建时必须复制并规范化为 `apps/web/public/img/yayasmart-logo-1-1152-928.png`，业务代码禁止引用原始特殊字符文件名。
 
 ### 15.7 demo 迁移原则
 

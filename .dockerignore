@@ -1,0 +1,42 @@
+.git
+.gitignore
+
+# Dependencies
+node_modules
+**/node_modules
+
+# Build output and caches
+dist
+**/dist
+coverage
+**/coverage
+.vite
+**/.vite
+.npm-cache
+**/.npm-cache
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Runtime data
+uploads
+**/uploads
+apps/api/prisma/dev.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Docs are not needed in Docker build context
+*.MD
+*.md
+
+# Workspace-local lockfiles are generated artifacts in this repo
+apps/api/package-lock.json

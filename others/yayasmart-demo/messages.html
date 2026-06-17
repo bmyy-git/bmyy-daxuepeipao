@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 消息中心</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg-light);
+            min-height: 100vh;
+            display: flex;
+        }
+        a { text-decoration: none; }
+
+        .sidebar {
+            width: 360px;
+            background: var(--card-bg);
+            border-right: 1px solid #E2E8F0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+        }
+        .sidebar-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .sidebar-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .sidebar-header img { width: 36px; height: 36px; border-radius: 8px; }
+        .sidebar-header h1 { font-size: 1.15rem; color: var(--text-dark); }
+        .search-bar {
+            position: relative;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 36px 10px 14px;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            background: #F8FAFC;
+        }
+        .search-bar .icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .chat-item {
+            display: flex;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .chat-item:hover { background: #F8FAFC; }
+        .chat-item.active { background: rgba(0,85,83,0.05); border-left: 3px solid var(--brand-primary); }
+        .chat-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            margin-right: 14px;
+            position: relative;
+        }
+        .chat-avatar.green { background: #D1FAE5; }
+        .chat-avatar.blue { background: #DBEAFE; }
+        .chat-avatar.purple { background: #EDE9FE; }
+        .chat-avatar.orange { background: #FEF3C7; }
+        .chat-avatar.online::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background: #10B981;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .chat-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-content .chat-name {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .chat-content .chat-message {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .chat-info {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .chat-info .chat-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .chat-info .chat-badge {
+            background: var(--brand-accent);
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .chat-area {
+            flex: 1;
+            margin-left: 360px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .chat-header {
+            padding: 20px 24px;
+            background: var(--card-bg);
+            border-bottom: 1px solid #F1F5F9;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .chat-header-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #D1FAE5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .chat-header-info {
+            flex: 1;
+        }
+        .chat-header-info .name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .chat-header-info .status {
+            font-size: 0.8rem;
+            color: #10B981;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+        }
+        .message {
+            margin-bottom: 20px;
+        }
+        .message.other { display: flex; }
+        .message.self { display: flex; justify-content: flex-end; }
+        .message-content {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            position: relative;
+        }
+        .message.other .message-content {
+            background: var(--card-bg);
+            border-radius: 16px 16px 16px 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .message.self .message-content {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            border-radius: 16px 16px 4px 16px;
+        }
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .message-avatar.green { background: #D1FAE5; }
+        .message-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .message-time {
+            font-size: 0.7rem;
+            margin-top: 6px;
+            opacity: 0.6;
+        }
+
+        .chat-input {
+            padding: 16px 24px;
+            background: var(--card-bg);
+            border-top: 1px solid #F1F5F9;
+        }
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 8px 16px;
+        }
+        .input-wrapper button {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.3s ease;
+        }
+        .input-wrapper button:hover { background: #E2E8F0; }
+        .input-wrapper input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+        }
+        .input-wrapper input:focus { outline: none; }
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--brand-primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        .send-btn:hover { transform: scale(1.05); }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; }
+            .chat-area { margin-left: 0; display: none; }
+            .chat-area.active { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="yayasmart-logo-all/yayasmart-3-logo-005A53.png" alt="笨猫丫丫 Logo">
+                <h1>消息中心</h1>
+            </div>
+            <div class="search-bar">
+                <input type="text" placeholder="搜索联系人...">
+                <span class="icon">🔍</span>
+            </div>
+        </div>
+        <div class="chat-list">
+            <div class="chat-item active" onclick="openChat('mentor')">
+                <div class="chat-avatar green online">👨‍🏫</div>
+                <div class="chat-content">
+                    <div class="chat-name">李明博士</div>
+                    <div class="chat-message">关于你的SOP修改建议，我整理了几点...</div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-time">刚刚</div>
+                    <div class="chat-badge">3</div>
+                </div>
+            </div>
+            <div class="chat-item" onclick="openChat('parent')">
+                <div class="chat-avatar blue">👨‍👩‍👧</div>
+                <div class="chat-content">
+                    <div class="chat-name">家长</div>
+                    <div class="chat-message">宝贝加油！爸爸妈妈永远支持你 💪</div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-time">10:30</div>
+                </div>
+            </div>
+            <div class="chat-item" onclick="openChat('system')">
+                <div class="chat-avatar purple">🔔</div>
+                <div class="chat-content">
+                    <div class="chat-name">系统通知</div>
+                    <div class="chat-message">恭喜！你获得了"连续打卡30天"徽章</div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-time">昨天</div>
+                </div>
+            </div>
+            <div class="chat-item" onclick="openChat('admin')">
+                <div class="chat-avatar orange">🛡️</div>
+                <div class="chat-content">
+                    <div class="chat-name">专属客服</div>
+                    <div class="chat-message">你的奖金已到账，请查收</div>
+                </div>
+                <div class="chat-info">
+                    <div class="chat-time">昨天</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+        <div class="chat-header">
+            <div class="chat-header-avatar">👨‍🏫</div>
+            <div class="chat-header-info">
+                <div class="name">李明博士</div>
+                <div class="status">🟢 在线</div>
+            </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message other">
+                <div class="message-avatar green">👨‍🏫</div>
+                <div class="message-content">
+                    <div class="message-text">同学你好，我是你的指导老师李明，很高兴认识你！</div>
+                    <div class="message-time">09:00</div>
+                </div>
+            </div>
+            <div class="message self">
+                <div class="message-content">
+                    <div class="message-text">老师好！我是张三，非常期待在您的指导下学习！</div>
+                    <div class="message-time">09:05</div>
+                </div>
+            </div>
+            <div class="message other">
+                <div class="message-avatar green">👨‍🏫</div>
+                <div class="message-content">
+                    <div class="message-text">看了你的目标是保研到计算机专业，这个方向非常好！我根据你的情况整理了一份SOP修改建议。</div>
+                    <div class="message-time">09:10</div>
+                </div>
+            </div>
+            <div class="message other">
+                <div class="message-avatar green">👨‍🏫</div>
+                <div class="message-content">
+                    <div class="message-text">关于你的SOP修改建议，我整理了几点：</div>
+                    <div class="message-time">10:00</div>
+                </div>
+            </div>
+            <div class="message self">
+                <div class="message-content">
+                    <div class="message-text">好的老师，我认真看看！非常感谢您的指导 🙏</div>
+                    <div class="message-time">10:05</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input">
+            <div class="input-wrapper">
+                <button>😊</button>
+                <button>📷</button>
+                <input type="text" id="messageInput" placeholder="输入消息...">
+                <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openChat(type) {
+            const chatData = {
+                mentor: { name: '李明博士', avatar: '👨‍🏫', status: '在线' },
+                parent: { name: '家长', avatar: '👨‍👩‍👧', status: '离线' },
+                system: { name: '系统通知', avatar: '🔔', status: '系统' },
+                admin: { name: '专属客服', avatar: '🛡️', status: '在线' }
+            };
+            const data = chatData[type];
+            document.querySelector('.chat-header-avatar').textContent = data.avatar;
+            document.querySelector('.chat-header-info .name').textContent = data.name;
+            document.querySelector('.chat-header-info .status').textContent = data.status === '在线' ? '🟢 在线' : '🔴 离线';
+            alert(`已切换到与「${data.name}」的聊天`);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            const newMessage = document.createElement('div');
+            newMessage.className = 'message self';
+            newMessage.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${message}</div>
+                    <div class="message-time">刚刚</div>
+                </div>
+            `;
+            chatMessages.appendChild(newMessage);
+            input.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    </script>
+</body>
+</html>

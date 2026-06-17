@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 新生注册</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 12px; }
+        header img { width: 40px; height: 40px; border-radius: 10px; }
+        header h1 { font-size: 1.25rem; font-weight: 600; }
+        header .back { color: rgba(255,255,255,0.8); font-size: 0.875rem; }
+        header .back:hover { color: white; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+
+        .hero {
+            text-align: center;
+            padding: 32px 20px;
+            margin-bottom: 24px;
+        }
+        .hero .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: #FEF3C7;
+            color: #B45309;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .hero h2 {
+            font-size: 1.75rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+        .hero p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            color: var(--brand-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: #F8FAFC;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .checkbox-item:hover { background: #F1F5F9; }
+        .checkbox-item.selected {
+            background: rgba(0, 85, 83, 0.08);
+            border-color: var(--brand-primary);
+        }
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-item label {
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-bottom: 0;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 85, 83, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 85, 83, 0.4);
+        }
+        .btn-secondary {
+            background: #F1F5F9;
+            color: var(--text-dark);
+        }
+        .btn-secondary:hover { background: #E2E8F0; }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-overlay.active { display: flex; }
+
+        .loading-cat {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 24px;
+        }
+        .loading-cat video {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .loading-text {
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+            font-weight: 600;
+            animation: pulse-text 2s ease-in-out infinite;
+        }
+        @keyframes pulse-text {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.1rem; }
+            .hero h2 { font-size: 1.5rem; }
+            .checkbox-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+            <h1>笨猫丫丫OPC</h1>
+        </div>
+        <a href="index.html" class="back">← 返回首页</a>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <span class="badge">🎯 新卡激活</span>
+            <h2>欢迎开启你的大学旅程</h2>
+            <p>填写以下信息，AI将为你生成专属的四年通关地图</p>
+        </div>
+
+        <div class="card">
+            <h3>📝 基础信息</h3>
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="name" placeholder="请输入你的姓名">
+            </div>
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="tel" id="phone" placeholder="请输入手机号">
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="email" placeholder="请输入邮箱地址">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🏛️ 院校信息</h3>
+            <div class="form-group">
+                <label>大学</label>
+                <select id="university">
+                    <option value="">请选择大学</option>
+                    <option value="pku">北京大学</option>
+                    <option value="tsinghua">清华大学</option>
+                    <option value="fudan">复旦大学</option>
+                    <option value="shanghai">上海交通大学</option>
+                    <option value="zhejiang">浙江大学</option>
+                    <option value="other">其他院校</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>学院（二级学院）</label>
+                <input type="text" id="college" placeholder="请输入学院名称">
+            </div>
+            <div class="form-group">
+                <label>专业</label>
+                <input type="text" id="major" placeholder="请输入专业名称">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🎯 目标锚定（可多选）</h3>
+            <div class="checkbox-group" id="goals">
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="baoyan">
+                    <span>保研/推免</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="kaoyan">
+                    <span>考研深造</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="biyesheng">
+                    <span>大满贯毕业</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="jiuye">
+                    <span>高质量就业</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="liuxue">
+                    <span>出国留学</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="gongkao">
+                    <span>考公考编</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" name="goal" value="other">
+                    <span>其他目标</span>
+                </label>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitForm()">
+            <span>🚀</span> 立即生成专属攻略
+        </button>
+
+        <div class="footer">
+            <p>提交后将进入导师匹配阶段</p>
+            <p style="margin-top: 4px; font-size: 0.75rem;">笨猫丫丫OPC · 外表笨笨，内核聪明</p>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading">
+        <div class="loading-cat">
+            <video autoplay loop muted playsinline>
+                <source src="yayasmart-mp4/cat_status_working.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="loading-text">正在为你生成专属攻略...</div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.checkbox-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const checkbox = item.querySelector('input');
+                checkbox.checked = !checkbox.checked;
+                item.classList.toggle('selected', checkbox.checked);
+            });
+        });
+
+        function submitForm() {
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+            const university = document.getElementById('university').value;
+
+            if (!name || !phone || !email) {
+                alert('请填写完整的基础信息！');
+                return;
+            }
+
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            setTimeout(() => {
+                loading.classList.remove('active');
+                window.location.href = 'waiting.html';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

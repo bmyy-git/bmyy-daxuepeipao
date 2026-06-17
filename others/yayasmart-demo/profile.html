@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 个人资料</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg-light);
+            min-height: 100vh;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 14px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 10px; }
+        header img { width: 36px; height: 36px; border-radius: 8px; }
+        header h1 { font-size: 1.15rem; font-weight: 600; }
+        header .back-btn { color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+
+        .profile-header {
+            text-align: center;
+            padding: 32px 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,85,83,0.1), rgba(139,92,246,0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            border: 4px solid white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .avatar-edit {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 36px;
+            height: 36px;
+            background: var(--brand-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .avatar-edit:hover { transform: scale(1.1); }
+        .profile-header h2 { font-size: 1.5rem; color: var(--text-dark); margin-bottom: 8px; }
+        .profile-header p { font-size: 0.95rem; color: var(--text-muted); }
+        .profile-badges {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .badge {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge.primary { background: #D1FAE5; color: #059669; }
+        .badge.accent { background: #FEF3C7; color: #B45309; }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .section-header h3 { font-size: 1.15rem; color: var(--text-dark); }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+        }
+        .form-group input:disabled {
+            background: #F8FAFC;
+            color: var(--text-muted);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .info-item:last-child { border-bottom: none; }
+        .info-item .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            font-size: 1.1rem;
+        }
+        .info-item .icon.purple { background: #EDE9FE; }
+        .info-item .icon.blue { background: #DBEAFE; }
+        .info-item .icon.orange { background: #FEF3C7; }
+        .info-item .icon.green { background: #D1FAE5; }
+        .info-item .content { flex: 1; }
+        .info-item .content .label { font-size: 0.75rem; color: var(--text-muted); }
+        .info-item .content .value { font-size: 0.95rem; color: var(--text-dark); }
+        .info-item .arrow { color: var(--text-muted); font-size: 0.85rem; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+        }
+        .btn-primary:hover { box-shadow: 0 4px 15px rgba(0,85,83,0.3); }
+        .btn-secondary {
+            background: #F1F5F9;
+            color: var(--text-dark);
+        }
+        .btn-secondary:hover { background: #E2E8F0; }
+
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="dashboard.html" class="back-btn">← 返回</a>
+            <div class="logo">
+                <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+                <h1>个人资料</h1>
+            </div>
+            <div style="width: 50px;"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="profile-header">
+            <div class="avatar-wrapper">
+                <div class="avatar">👨‍🎓</div>
+                <div class="avatar-edit" onclick="changeAvatar()">📷</div>
+            </div>
+            <h2>张三</h2>
+            <p>清华大学 · 计算机科学与技术 · 大一</p>
+            <div class="profile-badges">
+                <span class="badge primary">活跃用户</span>
+                <span class="badge accent">连续打卡45天</span>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <span>👤</span>
+                <h3>基本信息</h3>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" value="张三">
+                </div>
+                <div class="form-group">
+                    <label>学号</label>
+                    <input type="text" value="2024001001" disabled>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" value="zhangsan@yayasmart.com">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="tel" value="138****8888">
+                </div>
+                <div class="form-group">
+                    <label>性别</label>
+                    <select>
+                        <option>男</option>
+                        <option>女</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <span>🏫</span>
+                <h3>学校信息</h3>
+            </div>
+            <div class="form-group">
+                <label>学校</label>
+                <input type="text" value="清华大学">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>院系</label>
+                    <input type="text" value="计算机科学与技术学院">
+                </div>
+                <div class="form-group">
+                    <label>专业</label>
+                    <input type="text" value="计算机科学">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>年级</label>
+                    <select>
+                        <option>大一</option>
+                        <option>大二</option>
+                        <option>大三</option>
+                        <option>大四</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目标</label>
+                    <select>
+                        <option>保研</option>
+                        <option>考研</option>
+                        <option>就业</option>
+                        <option>留学</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <span>⚙️</span>
+                <h3>账户设置</h3>
+            </div>
+            <ul class="info-list">
+                <li class="info-item" onclick="navigateTo('notification')"><div class="icon purple">🔔</div><div class="content"><div class="label">通知设置</div><div class="value">开启全部</div></div><span class="arrow">›</span></li>
+                <li class="info-item" onclick="navigateTo('privacy')"><div class="icon blue">🔒</div><div class="content"><div class="label">隐私设置</div><div class="value">常规</div></div><span class="arrow">›</span></li>
+                <li class="info-item" onclick="navigateTo('password')"><div class="icon orange">🔑</div><div class="content"><div class="label">修改密码</div><div class="value">***</div></div><span class="arrow">›</span></li>
+                <li class="info-item" onclick="navigateTo('binding')"><div class="icon green">📱</div><div class="content"><div class="label">账号绑定</div><div class="value">微信已绑定</div></div><span class="arrow">›</span></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveProfile()">保存修改</button>
+        <button class="btn btn-secondary" style="margin-top: 12px;" onclick="logout()">退出登录</button>
+    </div>
+
+    <script>
+        function changeAvatar() {
+            alert('即将打开头像选择器...');
+        }
+        function navigateTo(page) {
+            const pages = {
+                notification: '通知设置',
+                privacy: '隐私设置',
+                password: '修改密码',
+                binding: '账号绑定'
+            };
+            alert(`即将跳转到「${pages[page]}」页面...`);
+        }
+        function saveProfile() {
+            alert('资料已保存！');
+        }
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

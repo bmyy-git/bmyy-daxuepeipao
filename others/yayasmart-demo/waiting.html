@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笨猫丫丫OPC · 等待导师匹配</title>
+    <link rel="icon" href="ico/yayasmart-002-128-128.ico" type="image/x-icon">
+    <style>
+        :root {
+            --brand-primary: #005A53;
+            --brand-accent: #B81F24;
+            --nav-bg: #3D3D3D;
+            --bg-light: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --card-bg: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #F0F9F8, #F8FAFC);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        a { text-decoration: none; }
+
+        header {
+            background: var(--nav-bg);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header .logo { display: flex; align-items: center; gap: 12px; }
+        header img { width: 40px; height: 40px; border-radius: 10px; }
+        header h1 { font-size: 1.25rem; font-weight: 600; }
+        header .back { color: rgba(255,255,255,0.8); font-size: 0.875rem; }
+
+        .container { max-width: 500px; margin: 0 auto; text-align: center; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #DBEAFE;
+            color: #1D4ED8;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: #3B82F6;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .cat-container {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0,85,83,0.1), rgba(139,92,246,0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .cat-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+        p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .features {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 32px;
+            text-align: left;
+        }
+        .features h3 {
+            font-size: 1.1rem;
+            color: var(--brand-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .features li:last-child { border-bottom: none; }
+        .features .icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 85, 83, 0.08);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .features .text {
+            flex: 1;
+        }
+        .features .title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .features .desc {
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), #007570);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 85, 83, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+
+        .notification {
+            background: #FEF3C7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .notification .bell {
+            font-size: 1.2rem;
+        }
+        .notification .content {
+            flex: 1;
+        }
+        .notification .title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #B45309;
+            margin-bottom: 4px;
+        }
+        .notification .text {
+            font-size: 0.85rem;
+            color: #92400E;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.1rem; }
+            h2 { font-size: 1.5rem; }
+            .cat-container { width: 160px; height: 160px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="yayasmart-logo-all/yayasmart-3-logo-FFFFFF.png" alt="笨猫丫丫 Logo">
+            <h1>笨猫丫丫OPC</h1>
+        </div>
+        <a href="index.html" class="back">← 返回首页</a>
+    </header>
+
+    <div class="container">
+        <div class="status-badge">
+            <span class="dot"></span>
+            正在为你匹配导师
+        </div>
+
+        <div class="cat-container">
+            <video autoplay loop muted playsinline>
+                <source src="yayasmart-mp4/cat_behavior_curious.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <h2>导师正在赶来的路上...</h2>
+        <p>
+            我们正在根据你的目标和背景，为你匹配合适的指导老师。<br>
+            请保持耐心，匹配完成后我们会通过短信和邮件通知你。
+        </p>
+
+        <div class="notification">
+            <span class="bell">🔔</span>
+            <div class="content">
+                <div class="title">匹配提醒</div>
+                <div class="text">预计匹配时间：1-3个工作日</div>
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>✨ 匹配标准</h3>
+            <ul>
+                <li>
+                    <div class="icon">👨‍🏫</div>
+                    <div class="text">
+                        <div class="title">专业背景匹配</div>
+                        <div class="desc">根据你的专业和目标匹配合适的导师</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="icon">⭐</div>
+                    <div class="text">
+                        <div class="title">经验丰富</div>
+                        <div class="desc">优先匹配有相关辅导经验的导师</div>
+                    </div>
+                </li>
+                <li>
+                    <div class="icon">💬</div>
+                    <div class="text">
+                        <div class="title">沟通顺畅</div>
+                        <div class="desc">确保导师与你的沟通风格契合</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary" onclick="simulateMatch()">
+            <span>🔄</span> 重新匹配（演示）
+        </button>
+
+        <div class="footer">
+            <p>有疑问？请联系客服：mall@yayasmart.com</p>
+            <p style="margin-top: 4px; font-size: 0.75rem;">笨猫丫丫OPC · 外表笨笨，内核聪明</p>
+        </div>
+    </div>
+
+    <script>
+        function simulateMatch() {
+            alert('匹配成功！即将跳转到导师页面...');
+            window.location.href = 'mentor.html';
+        }
+
+        setTimeout(() => {
+            const now = new Date();
+            if (now.getSeconds() % 10 === 0) {
+                console.log('导师匹配中...');
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
