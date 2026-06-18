@@ -16,6 +16,7 @@ import {
   SubmissionStatus,
   TaskStatus,
 } from '@prisma/client'
+import { hash } from 'bcryptjs'
 import type { AuthUser } from '../modules/auth/auth.types'
 import { PrismaService } from './prisma.service'
 import { canSubmitTask, nextSopVersion, reviewedTaskStatus } from './domain-rules'
@@ -300,6 +301,7 @@ export class DomainService {
     school: string
     college: string
     major: string
+    password: string
     goals: string[]
     customGoal?: string
     activationSessionId?: string
@@ -318,7 +320,7 @@ export class DomainService {
           role: Role.STUDENT,
           phone: body.phone,
           email: body.email || undefined,
-          passwordHash: 'nfc-login-only',
+          passwordHash: await hash(body.password, 10),
         },
       })
       const student = await tx.student.create({

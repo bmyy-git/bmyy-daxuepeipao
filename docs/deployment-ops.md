@@ -144,6 +144,14 @@ postgresql://POSTGRES_USER:POSTGRES_PASSWORD@postgres:5432/POSTGRES_DB
 | 导师 | 邮箱或手机号 + 密码 |
 | 管理员 | 邮箱或手机号 + 密码 |
 
+学生首次使用未绑定 NFC 卡时，会进入激活建档流程，并在激活页设置登录密码。后续学生使用：
+
+```text
+NFC 卡号 + 激活时设置的密码
+```
+
+登录系统。
+
 扫卡入口：
 
 ```text
@@ -179,6 +187,26 @@ docker compose up -d --build
 docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
 ```
 
+生产空库不会自动创建账号。首次部署后，需要创建第一个管理员：
+
+```bash
+docker compose exec \
+  -e ADMIN_EMAIL=admin@example.com \
+  -e ADMIN_PASSWORD='请改成强密码' \
+  api npm run prisma:bootstrap-admin --workspace @benmaoyaya/api
+```
+
+如果只想用手机号作为管理员登录账号：
+
+```bash
+docker compose exec \
+  -e ADMIN_PHONE=13800000000 \
+  -e ADMIN_PASSWORD='请改成强密码' \
+  api npm run prisma:bootstrap-admin --workspace @benmaoyaya/api
+```
+
+该命令不会清空数据；如果已存在激活管理员，会直接跳过。
+
 检查：
 
 ```bash
@@ -204,6 +232,15 @@ curl http://localhost:8080
 
 ```bash
 docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
+```
+
+创建首个管理员：
+
+```bash
+docker compose exec \
+  -e ADMIN_EMAIL=admin@example.com \
+  -e ADMIN_PASSWORD='请改成强密码' \
+  api npm run prisma:bootstrap-admin --workspace @benmaoyaya/api
 ```
 
 不要在真实生产库随意执行：

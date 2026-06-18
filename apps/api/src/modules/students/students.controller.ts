@@ -15,6 +15,7 @@ class ActivateStudentDto {
   @IsString() school!: string
   @IsString() college!: string
   @IsString() major!: string
+  @IsString() @MinLength(8) password!: string
   @IsArray() goals!: string[]
   @IsOptional() @IsString() customGoal?: string
   @IsOptional() @IsString() activationSessionId?: string

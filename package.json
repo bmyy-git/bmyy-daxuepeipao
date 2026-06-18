@@ -22,6 +22,7 @@
     "preview": "npm run preview --workspace @benmaoyaya/web",
     "prisma:generate": "npm run prisma:generate --workspace @benmaoyaya/api",
     "prisma:deploy": "npm run prisma:deploy --workspace @benmaoyaya/api",
-    "prisma:seed": "npm run prisma:seed --workspace @benmaoyaya/api"
+    "prisma:seed": "npm run prisma:seed --workspace @benmaoyaya/api",
+    "prisma:bootstrap-admin": "npm run prisma:bootstrap-admin --workspace @benmaoyaya/api"
   }
 }

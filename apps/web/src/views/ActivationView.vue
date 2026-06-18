@@ -19,11 +19,18 @@ const form = reactive({
   school: '',
   college: '',
   major: '',
+  password: '',
+  confirmPassword: '',
   goals: [] as string[],
   customGoal: '',
   privacy: false,
 })
-const canNext = computed(() => step.value === 1 ? form.name && form.phone && form.school && form.college && form.major : form.goals.length)
+const passwordReady = computed(() => form.password.length >= 8 && form.password === form.confirmPassword)
+const canNext = computed(() =>
+  step.value === 1
+    ? form.name && form.phone && form.school && form.college && form.major && passwordReady.value
+    : form.goals.length,
+)
 
 function toggleGoal(goal: string) {
   form.goals = form.goals.includes(goal) ? form.goals.filter((item) => item !== goal) : [...form.goals, goal]
@@ -60,6 +67,7 @@ async function submit() {
       school: form.school,
       college: form.college,
       major: form.major,
+      password: form.password,
       goals: form.goals,
       customGoal: form.customGoal,
       privacyAgreed: true,
@@ -91,7 +99,10 @@ async function submit() {
           <div class="field"><label>大学</label><input v-model="form.school" placeholder="录取院校" /></div>
           <div class="field"><label>学院（二级学院）</label><input v-model="form.college" placeholder="学院名称" /></div>
           <div class="field"><label>专业</label><input v-model="form.major" placeholder="专业名称" /></div>
+          <div class="field"><label>登录密码</label><input v-model="form.password" type="password" minlength="8" placeholder="至少 8 位" /></div>
+          <div class="field"><label>确认密码</label><input v-model="form.confirmPassword" type="password" minlength="8" placeholder="再次输入密码" /></div>
         </div>
+        <div v-if="form.password && !passwordReady" class="notice danger-notice section-gap">请确认两次密码一致，且至少 8 位。</div>
       </section>
 
       <section v-else-if="step === 2" class="card">
