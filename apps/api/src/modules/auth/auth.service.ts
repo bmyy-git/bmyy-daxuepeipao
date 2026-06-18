@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { CardStatus, CardType, Role, StudentStage } from '@prisma/client'
-import { compare } from 'bcryptjs'
+import { compare, hash } from 'bcryptjs'
 import { PrismaService } from '../../shared/prisma.service'
 import type { AuthUser } from './auth.types'
 
@@ -85,6 +85,9 @@ export class AuthService {
   }
 
   async demoLogin(role: 'student' | 'mentor' | 'parent' | 'admin') {
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_LOGIN !== 'true') {
+      throw new ForbiddenException('生产环境未启用演示登录')
+    }
     const roleMap: Record<typeof role, Role> = {
       student: Role.STUDENT,
       mentor: Role.MENTOR,
@@ -97,6 +100,19 @@ export class AuthService {
     })
     if (!user) throw new UnauthorizedException(`未找到 ${role} 演示账号`)
     return this.issue(user)
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+    if (!user || !user.active || !(await compare(currentPassword, user.passwordHash))) {
+      throw new UnauthorizedException('当前密码错误')
+    }
+    if (currentPassword === newPassword) throw new ForbiddenException('新密码不能与当前密码相同')
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await hash(newPassword, 10) },
+    })
+    return { success: true }
   }
 
   async loginByUserId(userId: string) {

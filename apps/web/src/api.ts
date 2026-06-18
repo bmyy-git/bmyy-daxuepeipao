@@ -34,13 +34,6 @@ export async function apiRequest<T>(
   return payload as T
 }
 
-export async function demoLogin(role: 'student' | 'mentor' | 'parent' | 'admin') {
-  return apiRequest<{ accessToken: string }>('/auth/demo-login', {
-    method: 'POST',
-    body: JSON.stringify({ role }),
-  }, '')
-}
-
 export async function passwordLogin(identifier: string, password: string) {
   return apiRequest<{ accessToken: string; user: { role: string }; redirectTo?: string }>('/auth/login', {
     method: 'POST',
@@ -53,4 +46,11 @@ export async function cardLogin(cardId: string, password: string, idh?: string) 
     method: 'POST',
     body: JSON.stringify({ cardId, password, idh }),
   }, '')
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  return apiRequest<{ success: boolean }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
 }

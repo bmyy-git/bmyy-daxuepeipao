@@ -1,20 +1,14 @@
 ﻿<script setup lang="ts">
 import { Copy, Mail, Star } from '@lucide/vue'
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { store } from '../store'
 
-const router = useRouter()
 const mode = ref<'bet' | 'annual'>('bet')
 const copied = ref('')
 function copy(value: string, label: string) {
   navigator.clipboard?.writeText(value)
   copied.value = label
   window.setTimeout(() => copied.value = '', 1200)
-}
-async function confirm() {
-  await store.confirmMentorReady(mode.value)
-  await router.push('/dashboard')
 }
 </script>
 
@@ -50,7 +44,7 @@ async function confirm() {
             <strong>年费订阅模式</strong><span>按学年购买服务，奖励归学生</span>
           </button>
         </div>
-        <button class="btn btn-primary confirm-btn" @click="confirm">确认模式，进入我的行动首页</button>
+        <RouterLink class="btn btn-primary confirm-btn" to="/dashboard">进入我的行动首页</RouterLink>
       </section>
     </div>
   </main>

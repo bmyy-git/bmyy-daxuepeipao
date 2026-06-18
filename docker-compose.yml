@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-benmaoyaya}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     environment:
       NODE_ENV: production
       APP_PORT: 3000
-      WEB_ORIGIN: http://localhost:8080
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
       DATABASE_URL: postgresql://${POSTGRES_USER:-benmaoyaya}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-benmaoyaya}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-replace-with-at-least-32-random-characters}
       JWT_ACCESS_EXPIRES_IN: 2h
@@ -36,7 +36,7 @@ services:
     volumes:
       - uploads_data:/app/uploads
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
 
   web:
     build:
@@ -45,7 +45,7 @@ services:
     depends_on:
       - api
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
 
 volumes:
   postgres_data:

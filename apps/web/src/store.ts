@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import { apiRequest, cardLogin, clearToken, demoLogin, getToken, passwordLogin, setToken } from './api'
+import { apiRequest, cardLogin, changePassword as requestPasswordChange, clearToken, getToken, passwordLogin, setToken } from './api'
 import type {
   AppState,
   GoalRevision,
@@ -106,22 +106,10 @@ async function loadState(role = state.currentRole) {
   }
 }
 
-async function authenticateRole(role: Role) {
-  const result = await demoLogin(role)
-  setToken(result.accessToken)
-  sessionStorage.setItem(ROLE_KEY, role)
-  state.currentRole = role
-  await loadState(role)
-}
-
 async function init() {
   const rememberedRole = sessionStorage.getItem(ROLE_KEY) as Role | null
   if (rememberedRole) state.currentRole = rememberedRole
   if (getToken()) await loadState(state.currentRole)
-}
-
-async function setRole(role: Role) {
-  await authenticateRole(role)
 }
 
 async function loginWithPassword(identifier: string, password: string) {
@@ -158,6 +146,10 @@ function logout() {
   Object.assign(state, emptyState())
 }
 
+async function changePassword(currentPassword: string, newPassword: string) {
+  await requestPasswordChange(currentPassword, newPassword)
+}
+
 async function activateStudent(
   payload: Partial<Student> & {
     idd: string
@@ -189,28 +181,6 @@ async function uploadActivationFile(file: File, activationSessionId: string) {
   form.append('file', file)
   form.append('activationSessionId', activationSessionId)
   return apiRequest('/files/upload', { method: 'POST', body: form }, '')
-}
-
-async function assignMentor() {
-  const studentToken = sessionStorage.getItem('benmaoyaya_access_token') || ''
-  const admin = await demoLogin('admin')
-  await apiRequest(`/admin/students/${state.student.id}/assign-mentor`, {
-    method: 'POST',
-    body: JSON.stringify({ mentorId: 'mentor_001' }),
-  }, admin.accessToken)
-  setToken(studentToken)
-  await loadState('student')
-}
-
-async function confirmMentorReady(mode: 'bet' | 'annual') {
-  const studentToken = sessionStorage.getItem('benmaoyaya_access_token') || ''
-  const mentor = await demoLogin('mentor')
-  await apiRequest(`/mentor/students/${state.student.id}/sop/confirm`, {
-    method: 'POST',
-    body: JSON.stringify({ serviceMode: mode }),
-  }, mentor.accessToken)
-  setToken(studentToken)
-  await loadState('student')
 }
 
 async function startTask(taskId: string) {
@@ -310,10 +280,6 @@ async function markMessageRead(id: string) {
   await loadState()
 }
 
-async function resetDemo() {
-  await authenticateRole(state.currentRole)
-}
-
 function startNewJourney() {
   // The NFC resolver owns the real routing decision.
 }
@@ -327,15 +293,13 @@ export const store = {
   urgentTasks,
   init,
   loadState,
-  setRole,
   loginWithPassword,
   loginWithCard,
   logout,
+  changePassword,
   activateStudent,
   createActivationSession,
   uploadActivationFile,
-  assignMentor,
-  confirmMentorReady,
   startTask,
   submitTask,
   reviewSubmission,
@@ -348,6 +312,5 @@ export const store = {
   updateCardStatus,
   askAi,
   markMessageRead,
-  resetDemo,
   startNewJourney,
 }

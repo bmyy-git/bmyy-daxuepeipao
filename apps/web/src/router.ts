@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ActivationView from './views/ActivationView.vue'
+import AccountView from './views/AccountView.vue'
 import AdminView from './views/AdminView.vue'
 import AiView from './views/AiView.vue'
 import DashboardView from './views/DashboardView.vue'
@@ -38,6 +39,7 @@ export const router = createRouter({
     { path: '/ai', component: AiView },
     { path: '/messages', component: MessagesView },
     { path: '/profile', component: ProfileView },
+    { path: '/account', component: AccountView },
     { path: '/parent', component: ParentView, meta: { role: 'parent' } },
     { path: '/mentor', component: MentorView, meta: { role: 'mentor' } },
     { path: '/admin', component: AdminView, meta: { role: 'admin' } },

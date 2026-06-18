@@ -1,14 +1,6 @@
 ﻿<script setup lang="ts">
 import { CheckCircle2, FileSearch, UserRoundSearch } from '@lucide/vue'
-import { useRouter } from 'vue-router'
 import BrandHero from '../components/BrandHero.vue'
-import { store } from '../store'
-
-const router = useRouter()
-async function simulateAssignment() {
-  await store.assignMentor()
-  await router.push('/mentor-ready')
-}
 </script>
 
 <template>
@@ -23,7 +15,6 @@ async function simulateAssignment() {
         </div>
         <div class="notice section-gap">资料较多时可能需要多一点时间。你可以先离开，之后再次碰卡会回到当前进度。</div>
         <div class="actions section-gap">
-          <button class="btn btn-primary" @click="simulateAssignment">演示：完成导师匹配</button>
           <RouterLink class="btn btn-secondary" to="/">返回首页</RouterLink>
         </div>
       </section>

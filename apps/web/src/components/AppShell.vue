@@ -109,6 +109,9 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         <RouterLink v-if="role === 'admin'" to="/admin" class="active">
           <Settings :size="20" />系统管理
         </RouterLink>
+        <RouterLink to="/account" :class="{ active: isActive('/account') }">
+          <UserRound :size="20" />账号安全
+        </RouterLink>
       </nav>
 
       <div class="sidebar-tip">

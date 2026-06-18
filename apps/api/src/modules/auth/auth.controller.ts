@@ -32,6 +32,16 @@ class DemoLoginDto {
   role!: 'student' | 'mentor' | 'parent' | 'admin'
 }
 
+class ChangePasswordDto {
+  @IsString()
+  @MinLength(6)
+  currentPassword!: string
+
+  @IsString()
+  @MinLength(8)
+  newPassword!: string
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -52,6 +62,11 @@ export class AuthController {
   @Post('demo-login')
   demoLogin(@Body() body: DemoLoginDto) {
     return this.auth.demoLogin(body.role)
+  }
+
+  @Post('change-password')
+  changePassword(@CurrentUser() user: AuthUser, @Body() body: ChangePasswordDto) {
+    return this.auth.changePassword(user.userId, body.currentPassword, body.newPassword)
   }
 
   @Get('me')
