@@ -30,6 +30,59 @@ export class DomainService {
   constructor(private readonly prisma: PrismaService) {}
 
   async resolveNfc(idd?: string, idh?: string, ip?: string, userAgent?: string) {
+    if (idd && !idh) {
+      const card = await this.prisma.nfcCard.findUnique({
+        where: { idd },
+        include: {
+          bindings: {
+            where: { status: 'active' },
+            include: { student: true },
+            take: 1,
+          },
+        },
+      })
+      if (!card) {
+        await this.logNfc(idd, '', 'card_not_found', ip, userAgent)
+        return { status: 'card_not_found', redirectTo: 'error', message: '这张卡片还没有准备好' }
+      }
+      if (card.status !== CardStatus.ACTIVE && card.status !== CardStatus.UNBOUND) {
+        await this.logNfc(idd, card.idh, lower(card.status), ip, userAgent)
+        return { status: lower(card.status), redirectTo: 'error', message: '该卡片当前不可用' }
+      }
+      const binding = card.bindings[0]
+      if (!binding) {
+        await this.logNfc(idd, card.idh, 'unbound', ip, userAgent)
+        return { status: 'unbound', redirectTo: 'activate', cardType: lower(card.type) }
+      }
+      if (binding.cardType === 'PARENT_FAMILY') {
+        const relation = await this.prisma.parentRelation.findFirst({
+          where: { studentId: binding.studentId, status: 'ACTIVE' },
+        })
+        const allowed = Boolean(relation && binding.student.parentConsent)
+        await this.logNfc(idd, card.idh, allowed ? 'parent' : 'parent_revoked', ip, userAgent)
+        return {
+          status: allowed ? 'active' : 'revoked',
+          redirectTo: allowed ? 'parent' : 'error',
+          cardType: 'parent_family',
+        }
+      }
+      const routeByStage: Record<StudentStage, string> = {
+        ACTIVATING: 'activate',
+        PENDING_MATCH: 'waiting',
+        MENTOR_MATCHED: 'mentor-ready',
+        SOP_REVIEWING: 'mentor-ready',
+        ACTIVE: 'dashboard',
+        PAUSED: 'error',
+        GRADUATED: 'growth',
+      }
+      await this.logNfc(idd, card.idh, lower(binding.student.stage), ip, userAgent)
+      return {
+        status: lower(binding.student.stage),
+        redirectTo: routeByStage[binding.student.stage],
+        studentId: binding.studentId,
+        cardType: lower(binding.cardType),
+      }
+    }
     if (!idd || !idh) return { status: 'invalid_params', redirectTo: 'error', message: '卡片参数不完整' }
     const card = await this.prisma.nfcCard.findUnique({
       where: { idd },
@@ -309,7 +362,7 @@ export class DomainService {
     consentVersion?: string
   }) {
     const card = await this.prisma.nfcCard.findUnique({ where: { idd: body.idd }, include: { bindings: true } })
-    if (!card || card.idh !== body.idh) throw new BadRequestException('卡片不存在或编号不匹配')
+    if (!card || (body.idh && card.idh !== body.idh)) throw new BadRequestException('卡片不存在或编号不匹配')
     if (!body.privacyAgreed) throw new BadRequestException('必须同意隐私授权后才能激活')
     if (card.status !== CardStatus.UNBOUND || card.bindings.some((item) => item.status === 'active')) {
       throw new BadRequestException('卡片已经激活')

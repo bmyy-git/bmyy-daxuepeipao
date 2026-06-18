@@ -20,7 +20,7 @@ import { FilesService } from './files.service'
 
 class ActivationSessionDto {
   @IsString() cardId!: string
-  @IsString() idh!: string
+  @IsOptional() @IsString() idh?: string
 }
 
 class DraftDto {

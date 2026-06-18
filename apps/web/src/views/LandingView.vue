@@ -12,9 +12,8 @@ onMounted(() => {
   const idh = params.get('idh') || params.get('id2') || ''
   if (idd) {
     router.replace({
-      path: '/login',
+      path: '/entry',
       query: {
-        mode: 'card',
         idd,
         ...(idh ? { idh } : {}),
       },

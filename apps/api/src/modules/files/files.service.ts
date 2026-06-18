@@ -25,15 +25,15 @@ const allowedMimes = new Set([
 export class FilesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createActivationSession(cardId: string, idh: string) {
+  async createActivationSession(cardId: string, idh?: string) {
     const card = await this.prisma.nfcCard.findUnique({ where: { idd: cardId } })
-    if (!card || card.idh !== idh || card.status !== 'UNBOUND') {
+    if (!card || (idh && card.idh !== idh) || card.status !== 'UNBOUND') {
       throw new BadRequestException('卡片不可创建激活会话')
     }
     return this.prisma.activationSession.create({
       data: {
         cardId,
-        idh,
+        idh: idh || card.idh,
         draft: {},
         expiresAt: new Date(Date.now() + 7 * 86400000),
       },

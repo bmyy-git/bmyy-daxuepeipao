@@ -33,7 +33,7 @@ onMounted(async () => {
       query: {
         mode: 'card',
         idd,
-        idh,
+        ...(idh ? { idh } : {}),
         redirect: routeMap[result.redirectTo] || '/',
       },
     })
