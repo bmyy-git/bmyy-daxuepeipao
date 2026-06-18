@@ -1,10 +1,27 @@
 ﻿<script setup lang="ts">
 import { ArrowRight, BadgeCheck, ChartNoAxesCombined, Nfc, ShieldCheck } from '@lucide/vue'
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BrandHero from '../components/BrandHero.vue'
 import { store } from '../store'
 
 const router = useRouter()
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const idd = (params.get('idd') || params.get('id1') || '').slice(0, 14)
+  const idh = params.get('idh') || params.get('id2') || ''
+  if (idd) {
+    router.replace({
+      path: '/login',
+      query: {
+        mode: 'card',
+        idd,
+        ...(idh ? { idh } : {}),
+      },
+    })
+  }
+})
+
 function startJourney() {
   store.startNewJourney()
   router.push('/entry?idd=04NEWCARD01&idh=00A1-0099')

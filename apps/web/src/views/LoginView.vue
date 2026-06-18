@@ -7,7 +7,7 @@ import { store } from '../store'
 const route = useRoute()
 const router = useRouter()
 const mode = ref<'card' | 'staff'>(route.query.mode === 'staff' ? 'staff' : 'card')
-const cardId = ref(String(route.query.idd || route.query.cardId || ''))
+const cardId = ref(String(route.query.idd || route.query.cardId || '').slice(0, 14))
 const idh = ref(String(route.query.idh || ''))
 const cardPassword = ref('')
 const identifier = ref('')
