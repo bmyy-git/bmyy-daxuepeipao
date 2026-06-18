@@ -20,7 +20,6 @@ function review(taskId: string, submissionId: string, decision: 'accept' | 'requ
   <div class="page">
     <div class="page-header">
       <div><h1>导师工作台</h1><p>{{ store.state.mentor.name }}，这里按风险和时效聚合所有待办。</p></div>
-      <button class="btn btn-secondary" @click="store.setRole('student'); $router.push('/dashboard')">查看学生视角</button>
     </div>
 
     <section class="grid grid-4">

@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiRequest } from '../api'
-import { store } from '../store'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,8 +20,6 @@ onMounted(async () => {
       await router.replace({ path: '/activate', query: { idd, idh } })
       return
     }
-    if (result.redirectTo === 'parent') await store.setRole('parent')
-    else await store.setRole('student')
     const routeMap: Record<string, string> = {
       waiting: '/waiting',
       'mentor-ready': '/mentor-ready',
@@ -31,7 +28,15 @@ onMounted(async () => {
       parent: '/parent',
       error: '/',
     }
-    await router.replace(routeMap[result.redirectTo] || '/')
+    await router.replace({
+      path: '/login',
+      query: {
+        mode: 'card',
+        idd,
+        idh,
+        redirect: routeMap[result.redirectTo] || '/',
+      },
+    })
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : '卡片识别失败'
   }

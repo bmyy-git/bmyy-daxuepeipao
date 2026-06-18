@@ -1,6 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { Role } from '@prisma/client'
+import { CardStatus, CardType, Role, StudentStage } from '@prisma/client'
 import { compare } from 'bcryptjs'
 import { PrismaService } from '../../shared/prisma.service'
 import type { AuthUser } from './auth.types'
@@ -9,15 +9,79 @@ import type { AuthUser } from './auth.types'
 export class AuthService {
   constructor(private readonly prisma: PrismaService, private readonly jwt: JwtService) {}
 
-  async login(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
+  async login(identifier: string, password: string) {
+    const normalized = identifier.trim()
+    const user = await this.prisma.user.findFirst({
+      where: {
+        active: true,
+        role: { in: [Role.MENTOR, Role.ADMIN, Role.SUPER_ADMIN] },
+        OR: [{ email: normalized }, { phone: normalized }],
+      },
       include: { student: true, mentor: true, parentRelations: { where: { status: 'ACTIVE' }, take: 1 } },
     })
-    if (!user || !user.active || !(await compare(password, user.passwordHash))) {
+    if (!user || !(await compare(password, user.passwordHash))) {
       throw new UnauthorizedException('账号或密码错误')
     }
     return this.issue(user)
+  }
+
+  async cardLogin(cardId: string, password: string, idh?: string) {
+    const card = await this.prisma.nfcCard.findUnique({
+      where: { idd: cardId.trim() },
+      include: {
+        bindings: {
+          where: { status: 'active' },
+          include: { student: { include: { user: true } } },
+          take: 1,
+        },
+      },
+    })
+    if (!card || (idh && card.idh !== idh.trim())) {
+      throw new UnauthorizedException('卡号或密码错误')
+    }
+    if (card.status !== CardStatus.ACTIVE) {
+      throw new ForbiddenException('该卡片当前不可用')
+    }
+    const binding = card.bindings[0]
+    if (!binding) throw new UnauthorizedException('卡片尚未绑定')
+
+    if (binding.cardType === CardType.PARENT_FAMILY) {
+      const relation = await this.prisma.parentRelation.findFirst({
+        where: {
+          studentId: binding.studentId,
+          status: 'ACTIVE',
+          ...(binding.subjectType === 'parent' ? { parentUserId: binding.subjectId } : {}),
+        },
+        include: { parentUser: true, student: true },
+      })
+      if (!relation || !relation.student.parentConsent) throw new ForbiddenException('家长授权已失效')
+      if (!relation.parentUser.active || !(await compare(password, relation.parentUser.passwordHash))) {
+        throw new UnauthorizedException('卡号或密码错误')
+      }
+      return {
+        ...this.issue({
+          ...relation.parentUser,
+          student: null,
+          mentor: null,
+          parentRelations: [{ id: relation.id }],
+        }),
+        redirectTo: 'parent',
+      }
+    }
+
+    const user = binding.student.user
+    if (!user.active || !(await compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('卡号或密码错误')
+    }
+    return {
+      ...this.issue({
+        ...user,
+        student: { id: binding.student.id },
+        mentor: null,
+        parentRelations: [],
+      }),
+      redirectTo: this.studentRedirect(binding.student.stage),
+    }
   }
 
   async demoLogin(role: 'student' | 'mentor' | 'parent' | 'admin') {
@@ -42,6 +106,19 @@ export class AuthService {
     })
     if (!user) throw new UnauthorizedException('用户不存在')
     return this.issue(user)
+  }
+
+  private studentRedirect(stage: StudentStage) {
+    const routeByStage: Record<StudentStage, string> = {
+      ACTIVATING: 'activate',
+      PENDING_MATCH: 'waiting',
+      MENTOR_MATCHED: 'mentor-ready',
+      SOP_REVIEWING: 'mentor-ready',
+      ACTIVE: 'dashboard',
+      PAUSED: 'error',
+      GRADUATED: 'growth',
+    }
+    return routeByStage[stage]
   }
 
   private issue(user: {

@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import { apiRequest, demoLogin, setToken } from './api'
+import { apiRequest, cardLogin, clearToken, demoLogin, getToken, passwordLogin, setToken } from './api'
 import type {
   AppState,
   GoalRevision,
@@ -58,6 +58,19 @@ const emptyState = (): AppState => ({
 const state = reactive<AppState>(emptyState())
 const loading = reactive({ active: false, error: '' })
 const ROLE_KEY = 'benmaoyaya_current_role'
+const roleFromApi = (role: string): Role => {
+  const normalized = role.toLowerCase()
+  if (normalized === 'mentor' || normalized === 'parent' || normalized === 'admin' || normalized === 'student') return normalized
+  if (normalized === 'super_admin') return 'admin'
+  return 'student'
+}
+
+const roleHome: Record<Role, string> = {
+  student: '/dashboard',
+  mentor: '/mentor',
+  parent: '/parent',
+  admin: '/admin',
+}
 
 const acceptedTasks = computed(() => state.tasks.filter((task) => task.status === 'accepted'))
 const pendingSubmissions = computed(() =>
@@ -104,15 +117,45 @@ async function authenticateRole(role: Role) {
 async function init() {
   const rememberedRole = sessionStorage.getItem(ROLE_KEY) as Role | null
   if (rememberedRole) state.currentRole = rememberedRole
-  try {
-    await loadState(state.currentRole)
-  } catch {
-    await authenticateRole('student')
-  }
+  if (getToken()) await loadState(state.currentRole)
 }
 
 async function setRole(role: Role) {
   await authenticateRole(role)
+}
+
+async function loginWithPassword(identifier: string, password: string) {
+  const result = await passwordLogin(identifier, password)
+  const role = roleFromApi(result.user.role)
+  setToken(result.accessToken)
+  sessionStorage.setItem(ROLE_KEY, role)
+  state.currentRole = role
+  await loadState(role)
+  return roleHome[role]
+}
+
+async function loginWithCard(cardId: string, password: string, idh?: string) {
+  const result = await cardLogin(cardId, password, idh)
+  const role = roleFromApi(result.user.role)
+  setToken(result.accessToken)
+  sessionStorage.setItem(ROLE_KEY, role)
+  state.currentRole = role
+  await loadState(role)
+  const routeMap: Record<string, string> = {
+    waiting: '/waiting',
+    'mentor-ready': '/mentor-ready',
+    dashboard: '/dashboard',
+    growth: '/growth',
+    parent: '/parent',
+    error: '/',
+  }
+  return result.redirectTo ? routeMap[result.redirectTo] || roleHome[role] : roleHome[role]
+}
+
+function logout() {
+  clearToken()
+  sessionStorage.removeItem(ROLE_KEY)
+  Object.assign(state, emptyState())
 }
 
 async function activateStudent(
@@ -285,6 +328,9 @@ export const store = {
   init,
   loadState,
   setRole,
+  loginWithPassword,
+  loginWithCard,
+  logout,
   activateStudent,
   createActivationSession,
   uploadActivationFile,

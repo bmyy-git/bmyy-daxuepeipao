@@ -45,6 +45,7 @@ h1, h2, h3, h4, p { margin-top: 0; }
 .role-switch { display: flex; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.14); }
 .role-switch button { padding: 7px 12px; border: 0; border-radius: 9px; color: white; background: transparent; font-size: 13px; }
 .role-switch button.active { color: var(--brand); background: white; font-weight: 800; }
+.role-pill { padding: 7px 12px; border-radius: 999px; color: var(--brand); background: white; font-size: 13px; font-weight: 900; }
 
 .sidebar {
   position: fixed; left: 0; top: 68px; bottom: 0; z-index: 40;

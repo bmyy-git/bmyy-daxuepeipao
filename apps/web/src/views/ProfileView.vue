@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { CreditCard, RotateCcw, ShieldCheck } from '@lucide/vue'
+import { CreditCard, ShieldCheck } from '@lucide/vue'
 import { ref } from 'vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { store } from '../store'
@@ -47,7 +47,6 @@ function submitRevision() {
           <div class="card-header"><div><h2>亲情观察授权</h2><p>家长只能查看你允许的成长摘要。</p></div><ShieldCheck /></div>
           <label class="toggle-row"><div><strong>允许父母亲情卡访问</strong><span>进度、公开荣誉、导师评价摘要</span></div><input :checked="store.state.student.parentConsent" type="checkbox" @change="store.setParentConsent(($event.target as HTMLInputElement).checked)" /></label>
         </section>
-        <button class="btn btn-secondary reset-btn" @click="store.resetDemo()"><RotateCcw :size="17" />恢复演示数据</button>
       </aside>
     </div>
   </div>
@@ -68,7 +67,6 @@ function submitRevision() {
 .toggle-row strong, .toggle-row span { display: block; }
 .toggle-row span { margin-top: 5px; color: var(--muted); font-size: 12px; }
 .toggle-row input { width: 22px; height: 22px; accent-color: var(--brand); }
-.reset-btn { width: 100%; }
 @media (max-width: 900px) { .profile-layout { grid-template-columns: 1fr; } }
 </style>
 

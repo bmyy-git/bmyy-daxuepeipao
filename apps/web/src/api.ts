@@ -9,6 +9,10 @@ export function setToken(token: string) {
   sessionStorage.setItem(TOKEN_KEY, token)
 }
 
+export function clearToken() {
+  sessionStorage.removeItem(TOKEN_KEY)
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
@@ -34,5 +38,19 @@ export async function demoLogin(role: 'student' | 'mentor' | 'parent' | 'admin')
   return apiRequest<{ accessToken: string }>('/auth/demo-login', {
     method: 'POST',
     body: JSON.stringify({ role }),
+  }, '')
+}
+
+export async function passwordLogin(identifier: string, password: string) {
+  return apiRequest<{ accessToken: string; user: { role: string }; redirectTo?: string }>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ identifier, password }),
+  }, '')
+}
+
+export async function cardLogin(cardId: string, password: string, idh?: string) {
+  return apiRequest<{ accessToken: string; user: { role: string }; redirectTo?: string }>('/auth/card-login', {
+    method: 'POST',
+    body: JSON.stringify({ cardId, password, idh }),
   }, '')
 }

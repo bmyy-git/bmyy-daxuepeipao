@@ -14,17 +14,25 @@ import {
   UserRound,
   UsersRound,
   X,
+  LogOut,
 } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getToken } from '../api'
 import { store } from '../store'
-import type { Role } from '../types'
 
 const open = ref(false)
 const route = useRoute()
 const router = useRouter()
 const role = computed(() => store.state.currentRole)
+const authenticated = computed(() => Boolean(getToken()))
 const unread = computed(() => store.state.messages.filter((message) => !message.read).length)
+const roleLabel = computed(() => ({
+  student: '学生',
+  mentor: '导师',
+  parent: '家长',
+  admin: '管理',
+}[role.value]))
 
 const studentNav = [
   { to: '/dashboard', label: '行动首页', icon: Home },
@@ -37,17 +45,10 @@ const studentNav = [
   { to: '/profile', label: '我的资料', icon: UserRound },
 ]
 
-const roleHome: Record<Role, string> = {
-  student: '/dashboard',
-  mentor: '/mentor',
-  parent: '/parent',
-  admin: '/admin',
-}
-
-async function switchRole(nextRole: Role) {
-  await store.setRole(nextRole)
+async function logout() {
+  store.logout()
   open.value = false
-  await router.push(roleHome[nextRole])
+  await router.push('/login')
 }
 
 const isActive = (to: string) => route.path === to || (to !== '/dashboard' && route.path.startsWith(to))
@@ -62,22 +63,21 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         <span>笨猫丫丫 OPC</span>
       </RouterLink>
       <div class="topbar-actions">
-        <RouterLink v-if="role === 'student'" class="message-link" to="/messages">
+        <RouterLink v-if="authenticated && role === 'student'" class="message-link" to="/messages">
           <Bell :size="20" />
           <span v-if="unread" class="notification-dot">{{ unread }}</span>
         </RouterLink>
-        <div class="role-switch">
-          <button :class="{ active: role === 'student' }" @click="switchRole('student')">学生</button>
-          <button :class="{ active: role === 'mentor' }" @click="switchRole('mentor')">导师</button>
-          <button :class="{ active: role === 'parent' }" @click="switchRole('parent')">家长</button>
-          <button :class="{ active: role === 'admin' }" @click="switchRole('admin')">管理</button>
-        </div>
+        <template v-if="authenticated">
+          <span class="role-pill">{{ roleLabel }}</span>
+          <button class="icon-btn" aria-label="退出登录" @click="logout"><LogOut :size="20" /></button>
+        </template>
+        <RouterLink v-else class="btn btn-secondary top-login" to="/login">登录系统</RouterLink>
       </div>
     </header>
 
     <aside class="sidebar">
       <button class="icon-btn sidebar-close mobile-only" aria-label="关闭菜单" @click="open = false"><X /></button>
-      <div v-if="role === 'student'" class="student-mini">
+      <div v-if="authenticated && role === 'student'" class="student-mini">
         <div class="avatar">{{ store.state.student.name.slice(0, 1) }}</div>
         <div>
           <strong>{{ store.state.student.name }}</strong>
@@ -85,7 +85,7 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         </div>
       </div>
 
-      <nav v-if="role === 'student'" class="side-nav">
+      <nav v-if="authenticated && role === 'student'" class="side-nav">
         <RouterLink
           v-for="item in studentNav"
           :key="item.to"
@@ -99,7 +99,7 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         </RouterLink>
       </nav>
 
-      <nav v-else class="side-nav">
+      <nav v-else-if="authenticated" class="side-nav">
         <RouterLink v-if="role === 'mentor'" to="/mentor" class="active">
           <UsersRound :size="20" />导师工作台
         </RouterLink>
@@ -115,7 +115,7 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         <Sparkles :size="18" />
         <div>
           <strong>碰一下，继续前进</strong>
-          <span>所有演示数据都会保存在当前浏览器。</span>
+          <span>刷卡或账号登录后，系统会同步最新成长记录。</span>
         </div>
       </div>
     </aside>

@@ -22,7 +22,7 @@ function startJourney() {
         <button class="btn btn-primary" @click="startJourney">
           模拟碰卡进入 <ArrowRight :size="18" />
         </button>
-        <RouterLink class="btn btn-secondary" to="/dashboard">查看学生系统</RouterLink>
+        <RouterLink class="btn btn-secondary" to="/login">登录系统</RouterLink>
       </div>
     </BrandHero>
 

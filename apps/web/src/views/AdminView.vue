@@ -1,12 +1,12 @@
 ﻿<script setup lang="ts">
-import { CreditCard, Database, RotateCcw, Shield, Users } from '@lucide/vue'
+import { CreditCard, Database, Shield, Users } from '@lucide/vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { store } from '../store'
 </script>
 
 <template>
   <div class="page">
-    <div class="page-header"><div><h1>系统管理</h1><p>NFC 生命周期、角色权限和学生状态概览。</p></div><button class="btn btn-secondary" @click="store.resetDemo()"><RotateCcw :size="17" />恢复演示数据</button></div>
+    <div class="page-header"><div><h1>系统管理</h1><p>NFC 生命周期、角色权限和学生状态概览。</p></div></div>
     <section class="grid grid-4">
       <article class="stat-card"><span class="stat-icon"><CreditCard /></span><div><strong>{{ store.state.cards.length }}</strong><span>已绑定卡片</span></div></article>
       <article class="stat-card"><span class="stat-icon"><Users /></span><div><strong>1</strong><span>活跃学生</span></div></article>
