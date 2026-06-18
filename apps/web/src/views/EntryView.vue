@@ -20,13 +20,16 @@ onMounted(async () => {
       await router.replace({ path: '/activate', query: { idd, idh } })
       return
     }
+    if (result.redirectTo === 'error') {
+      error.value = result.message || '这张卡片暂时无法使用'
+      return
+    }
     const routeMap: Record<string, string> = {
       waiting: '/waiting',
       'mentor-ready': '/mentor-ready',
       dashboard: '/dashboard',
       growth: '/growth',
       parent: '/parent',
-      error: '/',
     }
     await router.replace({
       path: '/login',
