@@ -2,41 +2,113 @@
 
 适用版本：`2.4.0`
 
-本项目是 npm workspaces 单仓库，包含：
+本项目是 npm workspaces 单仓库：
 
-- `apps/web`：Vue 3 + Vite 前端，生产环境由 Nginx 提供静态资源和 `/api` 反向代理。
+- `apps/web`：Vue 3 + Vite 前端，生产环境由 Nginx 容器托管静态文件，并反向代理 `/api`。
 - `apps/api`：NestJS REST API，使用 Prisma 访问 PostgreSQL。
-- `docker-compose.yml`：本地或单机部署用的 PostgreSQL、API、Web 编排。
+- `docker-compose.yml`：单机部署编排，包含 `postgres`、`api`、`web` 三个服务。
 
-## 1. 运行环境
+## 1. 服务器需要安装什么
 
-推荐环境：
+推荐使用 Docker Compose 部署。Ubuntu 24 云服务器提前安装：
 
-- Node.js：与 Dockerfile 保持一致，使用 Node `24.x`。
-- npm：随 Node 安装。
-- PostgreSQL：`16.x`。
-- Docker / Docker Compose：用于容器化部署。
+```text
+必须：Docker Engine、Docker Compose plugin、Git、curl、ca-certificates
+建议：ufw、防火墙规则、Nginx 或 Caddy、HTTPS 证书工具
+```
 
-Windows 本地开发时，如果 PowerShell 提示 `无法加载 npm.ps1`，使用 `npm.cmd` 代替 `npm`。
+不需要单独安装：
 
-## 2. 关键端口
+```text
+Node.js、npm、PostgreSQL、Prisma、前端 Nginx
+```
 
-| 服务 | 默认端口 | 说明 |
-| --- | ---: | --- |
-| Web 开发服务 | `5173` | Vite dev server |
-| API 服务 | `3000` | NestJS，接口前缀为 `/api` |
-| Web 生产服务 | `8080` | docker-compose 暴露的 Nginx |
-| PostgreSQL | `5432` | docker-compose 暴露的数据库 |
+这些都在 Docker 镜像或容器里处理。
+
+Ubuntu 24 安装基础包：
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl git ufw
+```
+
+Docker 建议使用官方 apt 源安装。若服务器拉取 Docker Hub 超时，可以在 `/etc/docker/daemon.json` 配置镜像加速，例如腾讯云：
+
+```json
+{
+  "registry-mirrors": [
+    "https://mirror.ccs.tencentyun.com"
+  ]
+}
+```
+
+修改后重启 Docker：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+docker info
+```
+
+## 2. 服务和端口
+
+当前 `docker-compose.yml` 默认端口：
+
+| 服务 | 容器端口 | 宿主机端口 | 说明 |
+| --- | ---: | ---: | --- |
+| `web` | `80` | `8080` | 网站入口 |
+| `api` | `3000` | `3000` | 后端接口 |
+| `postgres` | `5432` | `5432` | PostgreSQL |
+
+默认访问网站：
+
+```text
+http://服务器IP:8080
+```
+
+如果要直接访问：
+
+```text
+http://服务器IP
+```
+
+可以把 `docker-compose.yml` 的 web 端口改成：
+
+```yaml
+web:
+  ports:
+    - "80:80"
+```
+
+但如果服务器已有 Apache、Nginx、Caddy 等占用 80 端口，Docker 会启动失败。生产更推荐：
+
+```text
+外部 80/443 -> 宿主机 Nginx/Caddy -> 127.0.0.1:8080 -> web 容器
+```
+
+生产环境不建议把 `3000` 和 `5432` 暴露到公网。可以改成只绑定本机：
+
+```yaml
+api:
+  ports:
+    - "127.0.0.1:3000:3000"
+
+postgres:
+  ports:
+    - "127.0.0.1:5432:5432"
+```
+
+如果宿主机不需要直接访问 API 和数据库，也可以删除 `api`、`postgres` 的 `ports`，容器之间仍可通过 Docker 内部网络访问。
 
 ## 3. 环境变量
 
-根目录 `.env.example` 是部署模板。生产部署前复制并修改：
+根目录 `.env` 主要给 Docker Compose 使用。首次部署前复制模板：
 
 ```bash
 cp .env.example .env
 ```
 
-Windows PowerShell：
+Windows 本地：
 
 ```powershell
 Copy-Item .env.example .env
@@ -44,35 +116,42 @@ Copy-Item .env.example .env
 
 主要变量：
 
-| 变量 | 示例 | 说明 |
-| --- | --- | --- |
-| `NODE_ENV` | `production` | 运行环境 |
-| `APP_PORT` | `3000` | API 监听端口 |
-| `WEB_ORIGIN` | `https://example.com` | API CORS 白名单，多个域名用逗号分隔 |
-| `POSTGRES_DB` | `benmaoyaya` | Docker PostgreSQL 数据库名 |
-| `POSTGRES_USER` | `benmaoyaya` | Docker PostgreSQL 用户名 |
-| `POSTGRES_PASSWORD` | `change-me` | Docker PostgreSQL 密码，生产必须修改 |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/db` | Prisma 数据库连接串 |
-| `JWT_ACCESS_SECRET` | 随机 32 字符以上 | JWT 签名密钥，生产必须修改 |
-| `JWT_ACCESS_EXPIRES_IN` | `2h` | JWT 有效期 |
-| `DIFY_API_BASE_URL` | `https://api.dify.ai/v1` | Dify 接口地址，可为空 |
-| `DIFY_API_KEY` | `app-xxx` | Dify API Key，可为空 |
-| `FILE_STORAGE_PATH` | `/app/uploads` | 上传文件存储目录 |
-| `MAX_FILE_SIZE_MB` | `20` | 单文件上传大小限制 |
+| 变量 | 说明 |
+| --- | --- |
+| `POSTGRES_DB` | PostgreSQL 数据库名 |
+| `POSTGRES_USER` | PostgreSQL 用户名 |
+| `POSTGRES_PASSWORD` | PostgreSQL 密码，生产必须修改 |
+| `JWT_ACCESS_SECRET` | JWT 签名密钥，生产必须使用强随机值 |
+| `DIFY_API_BASE_URL` | Dify API 地址，可为空 |
+| `DIFY_API_KEY` | Dify API Key，可为空 |
 
-连接某些远程 PostgreSQL 时，如果服务端不需要 TLS，但 Prisma 报 `P1011 Error opening a TLS connection`，可在 `DATABASE_URL` 后追加：
+`docker-compose.yml` 会用这些变量拼出 API 容器内的：
+
+```text
+DATABASE_URL=postgresql://用户:密码@postgres:5432/数据库
+```
+
+本地直接运行后端时，使用的是：
+
+```text
+apps/api/.env
+```
+
+只要里面的 `DATABASE_URL` 正确，`apps/api/.env` 不需要再写 `POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`。
+
+如果连接某些远程 PostgreSQL 报：
+
+```text
+P1011 Error opening a TLS connection
+```
+
+且数据库不需要 TLS，可在 `DATABASE_URL` 后追加：
 
 ```text
 ?sslmode=disable
 ```
 
-例如：
-
-```text
-postgresql://user:password@db.example.com:5432/benmaoyaya?sslmode=disable
-```
-
-## 4. 本地开发运行
+## 4. 本地开发
 
 安装依赖：
 
@@ -88,53 +167,72 @@ npm run prisma:deploy
 npm run prisma:seed
 ```
 
-分别启动后端和前端：
+启动后端：
 
 ```bash
 npm run dev:api
+```
+
+启动前端：
+
+```bash
 npm run dev:web
 ```
 
-Windows PowerShell 可使用：
+根目录的：
+
+```bash
+npm run dev
+```
+
+只启动前端，不会启动后端。
+
+Windows PowerShell 如果提示 `无法加载 npm.ps1`，使用：
 
 ```powershell
 npm.cmd run dev:api
 npm.cmd run dev:web
 ```
 
-访问地址：
+本地访问：
 
-- 前端：`http://localhost:5173`
-- API 健康检查：`http://localhost:3000/api/health`
+```text
+前端：http://localhost:5173
+API：http://localhost:3000/api
+健康检查：http://localhost:3000/api/health
+```
 
-开发环境里，`apps/web/vite.config.ts` 会把 `/api` 代理到 `http://localhost:3000`。如果前端终端出现 `http proxy error ECONNREFUSED`，通常是 API 没启动或 API 启动失败。
+Vite 开发代理会把 `/api` 转发到 `http://localhost:3000`。如果前端终端出现：
+
+```text
+http proxy error ECONNREFUSED
+```
+
+通常是后端没有启动，或后端启动失败。
 
 ## 5. Docker Compose 部署
 
 首次部署：
 
 ```bash
+git pull
 docker compose up -d --build
 docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
+```
+
+演示或测试环境需要初始化演示数据：
+
+```bash
 docker compose exec api npm run prisma:seed --workspace @benmaoyaya/api
 ```
 
-访问：
+注意：`prisma:seed` 会清空并重建演示数据，生产已有真实数据时不要执行。
 
-```text
-http://localhost:8080
-```
-
-日常启动：
+查看服务：
 
 ```bash
-docker compose up -d
-```
-
-停止：
-
-```bash
-docker compose down
+docker ps
+docker compose ps
 ```
 
 查看日志：
@@ -145,151 +243,152 @@ docker compose logs -f web
 docker compose logs -f postgres
 ```
 
-重新构建并发布：
+停止服务：
 
 ```bash
-docker compose build
-docker compose up -d
+docker compose down
+```
+
+不要随便执行：
+
+```bash
+docker compose down -v
+```
+
+`-v` 会删除数据库和上传文件 volume，可能导致数据丢失。
+
+更新发布：
+
+```bash
+git pull
+docker compose up -d --build
 docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
 ```
 
-`prisma:seed` 会清空并重建演示数据，生产环境不要随意执行。
-
-## 6. 非 Docker 部署
-
-构建：
+如果只想重构建 API：
 
 ```bash
-npm install
-npm run build:all
+docker compose build --no-cache api
+docker compose up -d api
 ```
 
-数据库迁移：
+## 6. 登录系统
 
-```bash
-npm run prisma:deploy
-```
+当前登录规则：
 
-启动 API：
+| 用户类型 | 登录方式 |
+| --- | --- |
+| 学生 | NFC 卡号 + 密码 |
+| 家长 | 亲情卡号 + 密码 |
+| 导师 | 邮箱或手机号 + 密码 |
+| 管理员 | 邮箱或手机号 + 密码 |
 
-```bash
-npm run start --workspace @benmaoyaya/api
-```
-
-前端静态文件位于：
+登录页：
 
 ```text
-apps/web/dist
+/login
 ```
 
-可用 Nginx 托管该目录，并将 `/api/` 反向代理到 API 服务，例如：
+扫 NFC 卡入口：
 
-```nginx
-server {
-  listen 80;
-  server_name example.com;
-  root /var/www/benmaoyaya/web;
-  index index.html;
-
-  client_max_body_size 20m;
-
-  location /api/ {
-    proxy_pass http://127.0.0.1:3000/api/;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
-}
+```text
+/entry?idd=卡号&idh=卡片校验号
 ```
 
-如果前端和 API 分别部署到不同域名，需要同时配置：
+流程：
 
-- API 环境变量 `WEB_ORIGIN` 为前端域名。
-- 前端构建环境变量 `VITE_API_BASE_URL` 为 API 地址，例如 `https://api.example.com/api`。
+```text
+扫卡 -> /api/nfc/resolve 识别卡片状态 -> 跳转 /login 并预填卡号 -> 输入密码 -> /api/auth/card-login -> 签发 JWT
+```
+
+导师和管理员使用：
+
+```text
+POST /api/auth/login
+```
+
+学生和家长使用：
+
+```text
+POST /api/auth/card-login
+```
+
+演示数据初始化后可用：
+
+```text
+学生卡：04A1B2C3D4    密码：demo123456
+家长卡：04A1B2C3F6    密码：demo123456
+导师：mentor@yayasmart.com    密码：demo123456
+管理员：admin@yayasmart.com    密码：demo123456
+```
+
+后端仍保留 `/api/auth/demo-login`，用于内部演示兼容；正式前端入口不再暴露角色一键切换。
 
 ## 7. 数据库运维
 
-### 7.1 初始化
-
-新数据库必须执行：
+新数据库必须先执行迁移：
 
 ```bash
-npm run prisma:deploy
+docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
 ```
 
-演示环境可继续执行：
+如果报：
+
+```text
+P2021 table public.User does not exist
+```
+
+说明数据库表还没创建，执行上面的 migration 命令。
+
+演示环境写入数据：
 
 ```bash
-npm run prisma:seed
+docker compose exec api npm run prisma:seed --workspace @benmaoyaya/api
 ```
 
-### 7.2 迁移
-
-开发环境新增 schema 变更：
+检查用户表：
 
 ```bash
-npm run prisma:migrate --workspace @benmaoyaya/api
+docker compose exec postgres psql -U benmaoyaya -d benmaoyaya -c 'select id,email,role from "User";'
 ```
 
-生产环境只执行已提交的 migration：
+如果 `.env` 修改了 `POSTGRES_USER` 或 `POSTGRES_DB`，命令里的 `benmaoyaya` 要替换成实际值。
 
-```bash
-npm run prisma:deploy
-```
-
-### 7.3 备份
-
-Docker Compose 数据库备份：
+备份数据库：
 
 ```bash
 docker compose exec postgres pg_dump -U benmaoyaya -d benmaoyaya > backup.sql
 ```
 
-非 Docker 数据库备份：
+恢复数据库前建议先停 API：
 
 ```bash
-pg_dump "$DATABASE_URL" > backup.sql
-```
-
-### 7.4 恢复
-
-恢复前应先停止 API，避免写入冲突。
-
-Docker Compose 恢复：
-
-```bash
+docker compose stop api
 docker compose exec -T postgres psql -U benmaoyaya -d benmaoyaya < backup.sql
+docker compose start api
 ```
 
-恢复后执行：
+## 8. 上传文件
 
-```bash
-npm run prisma:deploy
+上传文件由 API 写入：
+
+```text
+FILE_STORAGE_PATH=/app/uploads
 ```
 
-## 8. 文件上传目录
-
-上传文件由 API 写入 `FILE_STORAGE_PATH`。
-
-Docker Compose 中该目录映射到 named volume：
+Docker Compose 中映射为：
 
 ```text
 uploads_data:/app/uploads
 ```
 
-运维注意事项：
+运维注意：
 
-- 需要定期备份上传目录。
-- 迁移服务器时，数据库和上传目录必须一起迁移。
-- Nginx `client_max_body_size` 与 `MAX_FILE_SIZE_MB` 应保持一致或略大。
+- 迁移服务器时，数据库 volume 和 `uploads_data` 都要迁移。
+- 定期备份数据库和上传目录。
+- `MAX_FILE_SIZE_MB` 与 Nginx `client_max_body_size` 应保持一致或略大。
 
-## 9. 健康检查与验证
+## 9. 健康检查和验证
 
 API 健康检查：
 
@@ -307,114 +406,146 @@ curl http://localhost:3000/api/health
 }
 ```
 
-验证演示登录：
+验证员工登录：
 
 ```bash
-curl -X POST http://localhost:3000/api/auth/demo-login \
+curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"role\":\"student\"}"
+  -d '{"identifier":"mentor@yayasmart.com","password":"demo123456"}'
 ```
 
-演示账号统一密码：
+验证卡登录：
 
-```text
-demo123456
+```bash
+curl -X POST http://localhost:3000/api/auth/card-login \
+  -H "Content-Type: application/json" \
+  -d '{"cardId":"04A1B2C3D4","password":"demo123456"}'
 ```
 
-| 角色 | 邮箱 |
-| --- | --- |
-| 管理员 | `admin@yayasmart.com` |
-| 导师 | `mentor@yayasmart.com` |
-| 学生 | `student@example.com` |
-| 家长 | `parent@example.com` |
+验证网站入口：
+
+```bash
+curl http://localhost:8080
+```
 
 ## 10. 常见故障
 
-### 10.1 Vite 提示 `http proxy error ECONNREFUSED`
+### 10.1 Docker 拉镜像超时
 
-原因：前端请求 `/api` 时，Vite 代理无法连接 `localhost:3000`。
-
-处理：
-
-```bash
-npm run dev:api
-```
-
-并检查 API 是否正常：
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-### 10.2 Prisma 报 `P1011 Error opening a TLS connection`
-
-原因：数据库连接的 SSL/TLS 模式和服务端不匹配。
-
-处理：按数据库要求设置 `DATABASE_URL`，不需要 TLS 的远程库可追加：
+表现：
 
 ```text
-?sslmode=disable
+failed to resolve reference docker.io/... i/o timeout
 ```
 
-### 10.3 Prisma 报 `P2021 table public.User does not exist`
+处理：配置 Docker 镜像加速，重启 Docker。
 
-原因：数据库未初始化或迁移未执行。
+### 10.2 80 端口被占用
+
+查看：
+
+```bash
+sudo netstat -napt | grep ':80'
+```
+
+如果看到 Apache：
+
+```text
+/usr/local/lighthouse/softwares/apache/bin/httpd -k start
+```
+
+说明 80 被 Apache 占用。处理方式：
+
+- 保持 Docker web 使用 `8080:80`，访问 `http://服务器IP:8080`。
+- 或停掉 Apache，再把 web 改成 `80:80`。
+- 或用 Apache/Nginx/Caddy 把 80/443 代理到 `127.0.0.1:8080`。
+
+### 10.3 API 构建报 `apps/api/node_modules not found`
+
+旧 Dockerfile 可能复制了不存在的 workspace 子目录依赖：
+
+```text
+/app/apps/api/node_modules
+```
+
+当前 Dockerfile 已修复，只复制：
+
+```text
+/app/node_modules
+```
+
+服务器更新代码后重新构建：
+
+```bash
+git pull
+docker compose build --no-cache api
+docker compose up -d api
+```
+
+### 10.4 数据库表不存在
+
+表现：
+
+```text
+The table public.User does not exist
+```
 
 处理：
 
 ```bash
-npm run prisma:deploy
+docker compose exec api npm run prisma:deploy --workspace @benmaoyaya/api
 ```
 
-如果是演示环境，还需要：
+演示环境再执行：
 
 ```bash
-npm run prisma:seed
+docker compose exec api npm run prisma:seed --workspace @benmaoyaya/api
 ```
 
-### 10.4 端口占用 `EADDRINUSE: address already in use :::3000`
+### 10.5 数据为空
 
-原因：已有 API 进程占用 3000。
-
-Windows 查看：
-
-```powershell
-Get-NetTCPConnection -LocalPort 3000
-```
-
-Linux/macOS 查看：
+如果表存在但页面没有演示数据，执行 seed：
 
 ```bash
-lsof -i :3000
+docker compose exec api npm run prisma:seed --workspace @benmaoyaya/api
 ```
 
-结束旧进程或修改 `APP_PORT`。
+生产已有真实数据时不要执行。
 
-### 10.5 PowerShell 提示 `无法加载 npm.ps1`
+### 10.6 后端端口占用
 
-原因：PowerShell 执行策略禁止运行脚本。
+表现：
 
-处理：使用 `npm.cmd`：
-
-```powershell
-npm.cmd run dev:api
+```text
+EADDRINUSE: address already in use :::3000
 ```
+
+查看：
+
+```bash
+sudo netstat -napt | grep ':3000'
+```
+
+停止旧进程或修改端口映射。
 
 ## 11. 发布检查清单
 
 发布前：
 
-- `.env` 已配置生产数据库、`WEB_ORIGIN`、强随机 `JWT_ACCESS_SECRET`。
-- 已执行 `npm run lint:all`。
-- 已执行 `npm run build:all`。
-- 已备份数据库和上传目录。
-- 已执行 `npm run prisma:deploy`。
-- 已验证 `/api/health`。
-- 已验证前端页面可访问，登录接口可用。
+- `.env` 已设置强随机 `JWT_ACCESS_SECRET`。
+- `.env` 已设置安全的 `POSTGRES_PASSWORD`。
+- `WEB_ORIGIN` 与实际访问域名一致。
+- 已备份数据库和上传文件 volume。
+- 已执行 `npm run build:all` 或 Docker 构建通过。
+- 已执行 `prisma:deploy`。
+- 生产环境未执行会清数据的 `prisma:seed`。
 
 发布后：
 
-- 查看 API、Web、PostgreSQL 日志。
-- 验证上传文件功能。
-- 验证学生、导师、家长、管理端核心页面。
+- `docker ps` 中 `web`、`api`、`postgres` 正常运行。
+- `postgres` 状态为 healthy。
+- `/api/health` 返回 `database: connected`。
+- `/login` 可访问。
+- 学生卡、家长卡、导师、管理员登录均验证通过。
+- 上传功能验证通过。
 - 记录发布时间、版本号、迁移编号和操作者。
