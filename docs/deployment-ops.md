@@ -65,7 +65,7 @@ docker info
 | --- | ---: | ---: | --- |
 | `web` | `80` | `${WEB_PORT:-8080}` | 网站入口 |
 | `api` | `3000` | `127.0.0.1:3000` | 仅宿主机可访问 |
-| `postgres` | `5432` | `127.0.0.1:5432` | 仅宿主机可访问 |
+| `postgres` | `5432` | `${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-5432}` | 默认仅宿主机可访问 |
 
 默认访问：
 
@@ -88,7 +88,24 @@ WEB_ORIGIN=https://你的域名
 
 若宿主机已有 Apache/Nginx/Caddy 占用 80，保持 `WEB_PORT=8080`，再由宿主机反向代理到 `127.0.0.1:8080`。
 
-生产环境不要把 PostgreSQL `5432` 和 API `3000` 直接暴露公网。
+生产环境默认不要把 PostgreSQL 和 API 直接暴露公网。如果确实需要远程连接数据库，可在 `.env` 中显式配置：
+
+```env
+POSTGRES_BIND=0.0.0.0
+POSTGRES_PORT=65432
+```
+
+这样外部连接为：
+
+```text
+Host: 服务器IP
+Port: 65432
+Database: POSTGRES_DB
+User: POSTGRES_USER
+Password: POSTGRES_PASSWORD
+```
+
+暴露数据库前必须在云服务器安全组和 `ufw` 中限制来源 IP，并使用强密码。
 
 ## 3. 环境变量
 
