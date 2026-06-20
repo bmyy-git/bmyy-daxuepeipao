@@ -57,19 +57,21 @@ async function submit() {
     for (const file of selectedFiles.value) {
       await store.uploadActivationFile(file, activationSessionId.value)
     }
+    const email = form.email.trim()
+    const customGoal = form.customGoal.trim()
     await store.activateStudent({
       idd: String(route.query.idd || ''),
       idh: String(route.query.idh || ''),
       activationSessionId: activationSessionId.value,
-      name: form.name,
-      phone: form.phone,
-      email: form.email,
-      school: form.school,
-      college: form.college,
-      major: form.major,
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      ...(email ? { email } : {}),
+      school: form.school.trim(),
+      college: form.college.trim(),
+      major: form.major.trim(),
       password: form.password,
       goals: form.goals,
-      customGoal: form.customGoal,
+      ...(customGoal ? { customGoal } : {}),
       privacyAgreed: true,
       consentVersion: 'V2.4',
     })
