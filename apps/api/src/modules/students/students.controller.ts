@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
+import { Transform } from 'class-transformer'
 import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { Public } from '../auth/public.decorator'
@@ -11,6 +12,7 @@ class ActivateStudentDto {
   @IsString() idh!: string
   @IsString() @MinLength(2) name!: string
   @IsString() phone!: string
+  @Transform(({ value }) => typeof value === 'string' && !value.trim() ? undefined : value)
   @IsOptional() @IsEmail() email?: string
   @IsString() school!: string
   @IsString() college!: string
