@@ -10,6 +10,7 @@ const actionTasks = computed(() =>
     return rank[a.status] - rank[b.status]
   }).slice(0, 4),
 )
+const currentSop = computed(() => store.state.sop.find(item => item.status === 'current') || store.state.sop[0])
 const labels: Record<string, string> = {
   todo: '待开始', doing: '进行中', submitted: '待导师验收', changes_requested: '待补充',
   accepted: '已验收', overdue: '已逾期', cancelled: '已取消',
@@ -60,9 +61,9 @@ const tones: Record<string, 'green' | 'red' | 'amber' | 'blue' | 'gray'> = {
       <aside class="grid side-stack">
         <section class="card">
           <div class="card-header"><div><h3>当前规划</h3><p>{{ store.state.student.sopVersion }}</p></div></div>
-          <h3>{{ store.state.sop.find(item => item.status === 'current')?.theme }}</h3>
-          <p class="muted">{{ store.state.sop.find(item => item.status === 'current')?.description }}</p>
-          <div class="progress"><span :style="{ width: `${store.state.sop[0].progress}%` }" /></div>
+          <h3>{{ currentSop?.theme || '路线图生成中' }}</h3>
+          <p class="muted">{{ currentSop?.description || '导师和丫丫 AI 正在整理你的资料，正式 SOP 确认后会在这里展开。' }}</p>
+          <div class="progress"><span :style="{ width: `${currentSop?.progress || 0}%` }" /></div>
           <RouterLink class="btn btn-ghost section-gap" to="/sop">查看完整路线图</RouterLink>
         </section>
         <section class="card ai-card">

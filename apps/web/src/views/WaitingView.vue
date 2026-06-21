@@ -15,6 +15,7 @@ import BrandHero from '../components/BrandHero.vue'
         </div>
         <div class="notice section-gap">资料较多时可能需要多一点时间。你可以先离开，之后再次碰卡会回到当前进度。</div>
         <div class="actions section-gap">
+          <RouterLink class="btn btn-primary" to="/dashboard">进入学生端</RouterLink>
           <RouterLink class="btn btn-secondary" to="/">返回首页</RouterLink>
         </div>
       </section>
