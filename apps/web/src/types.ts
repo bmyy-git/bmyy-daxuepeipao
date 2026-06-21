@@ -141,6 +141,16 @@ export interface Card {
   primary: boolean
 }
 
+export interface DocumentFile {
+  id: string
+  originalFileName: string
+  mimeType: string
+  fileSize: number
+  status: string
+  summary?: string | null
+  createdAt: string
+}
+
 export interface AppState {
   currentRole: Role
   student: Student

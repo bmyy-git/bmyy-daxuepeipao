@@ -2,6 +2,7 @@ import { computed, reactive } from 'vue'
 import { apiRequest, cardLogin, changePassword as requestPasswordChange, clearToken, getToken, passwordLogin, setToken } from './api'
 import type {
   AppState,
+  DocumentFile,
   GoalRevision,
   PeriodReview,
   Role,
@@ -183,6 +184,32 @@ async function uploadActivationFile(file: File, activationSessionId: string) {
   return apiRequest('/files/upload', { method: 'POST', body: form }, '')
 }
 
+async function uploadDocument(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  return apiRequest<DocumentFile>('/files/upload-auth', { method: 'POST', body: form })
+}
+
+async function listDocuments() {
+  return apiRequest<DocumentFile[]>('/files')
+}
+
+async function downloadDocument(document: Pick<DocumentFile, 'id' | 'originalFileName'>) {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/files/${document.id}/download`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  })
+  if (!response.ok) throw new Error('文件下载失败')
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = window.document.createElement('a')
+  link.href = url
+  link.download = document.originalFileName
+  window.document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 async function startTask(taskId: string) {
   await apiRequest(`/tasks/${taskId}/start`, { method: 'POST' })
   await loadState()
@@ -300,6 +327,9 @@ export const store = {
   activateStudent,
   createActivationSession,
   uploadActivationFile,
+  uploadDocument,
+  listDocuments,
+  downloadDocument,
   startTask,
   submitTask,
   reviewSubmission,

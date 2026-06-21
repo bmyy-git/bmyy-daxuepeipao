@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { CreditCard, KeyRound, ShieldCheck } from '@lucide/vue'
 import { ref } from 'vue'
+import DocumentPanel from '../components/DocumentPanel.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { store } from '../store'
 
@@ -56,6 +57,7 @@ async function submitPasswordChange() {
           <button class="btn btn-primary section-gap" :disabled="!reason.trim()" @click="submitRevision">提交导师审核</button>
           <div v-for="revision in store.state.goalRevisions" :key="revision.id" class="revision"><div><strong>{{ revision.newGoals.join('、') }}</strong><p>{{ revision.reason }}</p></div><StatusBadge :tone="revision.status === 'approved' ? 'green' : revision.status === 'rejected' ? 'red' : 'amber'" :label="revision.status === 'approved' ? '已通过' : revision.status === 'rejected' ? '已驳回' : '审核中'" /></div>
         </article>
+        <DocumentPanel title="我的资料文档" description="补充培养方案、学生手册、成绩或证书材料。" />
       </section>
 
       <aside class="grid side-stack">

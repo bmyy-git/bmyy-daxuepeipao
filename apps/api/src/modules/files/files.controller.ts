@@ -57,6 +57,15 @@ export class FilesController {
     return this.files.upload(file, body.activationSessionId)
   }
 
+  @Post('files/upload-auth')
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  uploadForCurrentStudent(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.files.uploadForUser(file, user)
+  }
+
   @Get('files')
   list(@CurrentUser() user: AuthUser) {
     return this.files.list(user)

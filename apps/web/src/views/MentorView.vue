@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
 import { AlertTriangle, Check, ClipboardCheck, FileCheck2, MessageSquareText, RotateCcw, UserRoundCheck, X } from '@lucide/vue'
 import { computed, ref } from 'vue'
+import DocumentPanel from '../components/DocumentPanel.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import { store } from '../store'
 
@@ -82,6 +83,8 @@ function review(taskId: string, submissionId: string, decision: 'accept' | 'requ
         </div>
       </div>
     </section>
+
+    <DocumentPanel class="section-gap" title="学生资料补充" description="为当前负责学生上传规划分析需要的补充材料。" />
   </div>
 </template>
 

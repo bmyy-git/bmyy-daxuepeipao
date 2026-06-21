@@ -83,7 +83,26 @@ export class FilesService {
     })
   }
 
+  async uploadForUser(file: Express.Multer.File, user: AuthUser) {
+    const studentId = await this.studentIdFor(user)
+    return this.upload(file, undefined, studentId)
+  }
+
   async list(user: AuthUser) {
+    if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
+      return this.prisma.document.findMany({
+        select: {
+          id: true,
+          originalFileName: true,
+          mimeType: true,
+          fileSize: true,
+          status: true,
+          summary: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+    }
     const studentId = await this.studentIdFor(user)
     return this.prisma.document.findMany({
       where: { studentId },
