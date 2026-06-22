@@ -418,17 +418,16 @@ MVP 需要实现基础工作台。
 
 ### 4.10 管理后台
 
-MVP 可实现基础管理能力：
+MVP 管理后台采用四个子页面，每个子页面对应一个主表。默认路由 `/admin` 跳转到 `/admin/cards`。
 
-- NFC 卡片导入和状态查看。
-- 学生列表。
-- 导师列表。
-- 学生与导师关系维护。
-- 学校资料上传。
-- Dify 知识库配置。
-- 通知模板配置。
+| 路由 | 子页面 | 主表 | MVP 能力 |
+| --- | --- | --- | --- |
+| `/admin/cards` | 卡片 | NFC 卡片表 | 查看卡片、导入卡片、绑定学生、挂失/解挂、换卡、设为主卡 |
+| `/admin/students` | 学生 | 学生表 | 查看学生档案、业务阶段、目标、导师关系和家长授权；执行导师分配 |
+| `/admin/teachers` | 老师 | 老师表 | 查看导师/老师资料、擅长方向、联系方式、服务人数和启停状态 |
+| `/admin/documents` | 文档 | 文档表 | 上传、下载、删除、按学校筛选、查看解析状态和摘要 |
 
-奖金、荣誉、数据看板可先保留配置入口，第二阶段完善。
+奖金、荣誉、Dify 知识库配置、通知模板和数据看板第二阶段再作为独立子页面扩展，不在 MVP 中与四个主表混排。
 
 ## 5. 后端模块实现
 
@@ -447,7 +446,13 @@ MVP 可实现基础管理能力：
 GET /api/nfc/resolve
 POST /api/nfc/bind
 GET /api/admin/nfc-cards
-POST /api/admin/nfc-cards/import
+POST /api/admin/nfc-cards/generate
+POST /api/admin/nfc-cards/import-idd
+POST /api/admin/nfc-cards/{idd}/bind
+POST /api/admin/nfc-cards/{idd}/replace
+POST /api/admin/nfc-cards/{idd}/set-primary
+PATCH /api/admin/nfc-cards/{idd}/status
+DELETE /api/admin/nfc-cards/{idd}/binding
 ```
 
 ### 5.2 学生档案模块
@@ -915,7 +920,11 @@ AI 生成结果只作为 V0.1 草案，必须经导师确认后才能成为 V1.0
 /messages                        消息中心
 /parent                          家长观察室
 /mentor                          导师工作台
-/admin                           管理后台
+/admin                           管理后台，默认跳转 /admin/cards
+/admin/cards                     管理后台：卡片表
+/admin/students                  管理后台：学生表
+/admin/teachers                  管理后台：老师表
+/admin/documents                 管理后台：文档表
 ```
 
 旧链接 `?id1=&id2=` 在网关层兼容，解析后 301/前端替换为 `idd/idh` 语义；日志同时保存原始参数，便于已有卡片迁移。

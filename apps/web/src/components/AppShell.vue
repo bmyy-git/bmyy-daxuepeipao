@@ -5,11 +5,12 @@ import {
   Bot,
   ChartNoAxesCombined,
   ClipboardCheck,
+  CreditCard,
+  FileText,
   GraduationCap,
   HeartHandshake,
   Home,
   Menu,
-  Settings,
   Sparkles,
   UserRound,
   UsersRound,
@@ -106,8 +107,17 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         <RouterLink v-if="role === 'parent'" to="/parent" class="active">
           <HeartHandshake :size="20" />家长观察室
         </RouterLink>
-        <RouterLink v-if="role === 'admin'" to="/admin" class="active">
-          <Settings :size="20" />系统管理
+        <RouterLink v-if="role === 'admin'" to="/admin/cards" :class="{ active: isActive('/admin/cards') }">
+          <CreditCard :size="20" />卡片
+        </RouterLink>
+        <RouterLink v-if="role === 'admin'" to="/admin/students" :class="{ active: isActive('/admin/students') }">
+          <GraduationCap :size="20" />学生
+        </RouterLink>
+        <RouterLink v-if="role === 'admin'" to="/admin/teachers" :class="{ active: isActive('/admin/teachers') }">
+          <UsersRound :size="20" />老师
+        </RouterLink>
+        <RouterLink v-if="role === 'admin'" to="/admin/documents" :class="{ active: isActive('/admin/documents') }">
+          <FileText :size="20" />文档
         </RouterLink>
         <RouterLink to="/account" :class="{ active: isActive('/account') }">
           <UserRound :size="20" />账号安全

@@ -42,7 +42,8 @@ export const router = createRouter({
     { path: '/account', component: AccountView },
     { path: '/parent', component: ParentView, meta: { role: 'parent' } },
     { path: '/mentor', component: MentorView, meta: { role: 'mentor' } },
-    { path: '/admin', component: AdminView, meta: { role: 'admin' } },
+    { path: '/admin', redirect: '/admin/cards' },
+    { path: '/admin/:section(cards|students|teachers|documents)', component: AdminView, meta: { role: 'admin' } },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
