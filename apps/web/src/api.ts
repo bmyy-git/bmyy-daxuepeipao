@@ -41,10 +41,10 @@ export async function passwordLogin(identifier: string, password: string) {
   }, '')
 }
 
-export async function cardLogin(cardId: string, password: string, idh?: string) {
+export async function cardLogin(cardId: string, password: string, idh?: string, batchCode?: string) {
   return apiRequest<{ accessToken: string; user: { role: string }; redirectTo?: string }>('/auth/card-login', {
     method: 'POST',
-    body: JSON.stringify({ cardId, password, idh }),
+    body: JSON.stringify({ cardId, password, idh, batchCode }),
   }, '')
 }
 

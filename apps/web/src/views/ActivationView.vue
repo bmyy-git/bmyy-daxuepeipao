@@ -32,13 +32,23 @@ const canNext = computed(() =>
     : form.goals.length,
 )
 
+function parseNfcParam(value: string, explicitBatchCode = '') {
+  const normalized = value.trim()
+  const embeddedBatchCode = normalized.length >= 18 ? normalized.slice(14, 18) : ''
+  return {
+    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
+    batchCode: explicitBatchCode.trim() || embeddedBatchCode || '',
+  }
+}
+
 function toggleGoal(goal: string) {
   form.goals = form.goals.includes(goal) ? form.goals.filter((item) => item !== goal) : [...form.goals, goal]
 }
 
 onMounted(async () => {
   try {
-    const session = await store.createActivationSession(String(route.query.idd || ''), String(route.query.idh || ''))
+    const parsed = parseNfcParam(String(route.query.idd || ''), String(route.query.batchCode || route.query.batch || ''))
+    const session = await store.createActivationSession(parsed.idd, String(route.query.idh || ''), parsed.batchCode || undefined)
     activationSessionId.value = session.id
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : '无法创建激活会话'
@@ -59,9 +69,11 @@ async function submit() {
     }
     const email = form.email.trim()
     const customGoal = form.customGoal.trim()
+    const parsed = parseNfcParam(String(route.query.idd || ''), String(route.query.batchCode || route.query.batch || ''))
     await store.activateStudent({
-      idd: String(route.query.idd || ''),
+      idd: parsed.idd,
       idh: String(route.query.idh || ''),
+      ...(parsed.batchCode ? { batchCode: parsed.batchCode } : {}),
       activationSessionId: activationSessionId.value,
       name: form.name.trim(),
       phone: form.phone.trim(),

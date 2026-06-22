@@ -10,6 +10,7 @@ import { AuthService } from '../auth/auth.service'
 class ActivateStudentDto {
   @IsString() idd!: string
   @IsString() idh!: string
+  @IsOptional() @IsString() batchCode?: string
   @IsString() @MinLength(2) name!: string
   @IsString() phone!: string
   @Transform(({ value }) => typeof value === 'string' && !value.trim() ? undefined : value)

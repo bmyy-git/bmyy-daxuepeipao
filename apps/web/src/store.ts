@@ -124,8 +124,8 @@ async function loginWithPassword(identifier: string, password: string) {
   return roleHome[role]
 }
 
-async function loginWithCard(cardId: string, password: string, idh?: string) {
-  const result = await cardLogin(cardId, password, idh)
+async function loginWithCard(cardId: string, password: string, idh?: string, batchCode?: string) {
+  const result = await cardLogin(cardId, password, idh, batchCode)
   const role = roleFromApi(result.user.role)
   setToken(result.accessToken)
   sessionStorage.setItem(ROLE_KEY, role)
@@ -156,6 +156,7 @@ async function activateStudent(
   payload: Partial<Student> & {
     idd: string
     idh: string
+    batchCode?: string
     activationSessionId?: string
     privacyAgreed?: boolean
     consentVersion?: string
@@ -171,10 +172,10 @@ async function activateStudent(
   await loadState('student')
 }
 
-async function createActivationSession(idd: string, idh: string) {
+async function createActivationSession(idd: string, idh: string, batchCode?: string) {
   return apiRequest<{ id: string }>('/activation-sessions', {
     method: 'POST',
-    body: JSON.stringify({ cardId: idd, idh }),
+    body: JSON.stringify({ cardId: idd, idh, batchCode }),
   }, '')
 }
 

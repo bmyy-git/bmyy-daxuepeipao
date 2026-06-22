@@ -23,6 +23,7 @@ import { FilesService } from './files.service'
 class ActivationSessionDto {
   @IsString() cardId!: string
   @IsOptional() @IsString() idh?: string
+  @IsOptional() @IsString() batchCode?: string
 }
 
 class DraftDto {
@@ -40,7 +41,7 @@ export class FilesController {
   @Public()
   @Post('activation-sessions')
   createSession(@Body() body: ActivationSessionDto) {
-    return this.files.createActivationSession(body.cardId, body.idh)
+    return this.files.createActivationSession(body.cardId, body.idh, body.batchCode)
   }
 
   @Public()

@@ -22,6 +22,10 @@ class CardLoginDto {
   @IsString()
   idh?: string
 
+  @IsOptional()
+  @IsString()
+  batchCode?: string
+
   @IsString()
   @MinLength(6)
   password!: string
@@ -55,7 +59,7 @@ export class AuthController {
   @Public()
   @Post('card-login')
   cardLogin(@Body() body: CardLoginDto) {
-    return this.auth.cardLogin(body.cardId, body.password, body.idh)
+    return this.auth.cardLogin(body.cardId, body.password, body.idh, body.batchCode)
   }
 
   @Public()
