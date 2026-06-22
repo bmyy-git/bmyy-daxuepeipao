@@ -12,11 +12,11 @@ import {
   UserRoundCheck,
   UsersRound,
 } from '@lucide/vue'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { store } from '../store'
 
 const router = useRouter()
+const showNfcPrompt = ref(false)
 
 const enrollmentSteps = [
   {
@@ -88,8 +88,7 @@ onMounted(() => {
 })
 
 function startJourney() {
-  store.startNewJourney()
-  router.push('/entry?idd=04NEWCARD01&idh=00A1-0099')
+  showNfcPrompt.value = true
 }
 </script>
 
@@ -202,6 +201,21 @@ function startJourney() {
         <p class="copyright">© 2026 笨猫丫丫 OPC · 学习陪跑系统</p>
       </div>
     </footer>
+
+    <div
+      v-if="showNfcPrompt"
+      class="nfc-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nfcPromptTitle"
+      @click.self="showNfcPrompt = false"
+    >
+      <div class="nfc-modal-card">
+        <div class="nfc-modal-icon"><ClipboardList :size="32" /></div>
+        <h2 id="nfcPromptTitle">请碰NFC卡片注册或登录</h2>
+        <button class="landing-btn landing-btn-primary" @click="showNfcPrompt = false">我知道了</button>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -657,6 +671,45 @@ button.entry-card {
   margin: 8px 0 0;
   font-size: .8rem;
   opacity: .72;
+}
+
+.nfc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .48);
+  backdrop-filter: blur(6px);
+}
+
+.nfc-modal-card {
+  width: min(420px, 100%);
+  padding: 34px 28px 30px;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .22);
+  text-align: center;
+}
+
+.nfc-modal-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #005a53;
+  background: rgba(0, 85, 83, .08);
+}
+
+.nfc-modal-card h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.35rem;
 }
 
 @media (min-width: 640px) {
