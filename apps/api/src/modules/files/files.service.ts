@@ -21,6 +21,23 @@ const allowedMimes = new Set([
   'image/png',
 ])
 
+export function normalizeOriginalFileName(originalName: string) {
+  const decodedName = decodePossiblyMojibakeFileName(originalName)
+  const sanitized = decodedName
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}._ -]/gu, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return sanitized || 'document'
+}
+
+function decodePossiblyMojibakeFileName(fileName: string) {
+  if (!/[ÃÂÄÅÆÇÈÉÏåäæçéèï]/.test(fileName)) return fileName
+  const decoded = Buffer.from(fileName, 'latin1').toString('utf8')
+  if (decoded.includes('\uFFFD')) return fileName
+  return /[\u3400-\u9fff\u3000-\u303f\uff00-\uffef]/.test(decoded) ? decoded : fileName
+}
+
 @Injectable()
 export class FilesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -50,9 +67,10 @@ export class FilesService {
 
   async upload(file: Express.Multer.File, activationSessionId?: string, studentId?: string) {
     if (!file) throw new BadRequestException('请选择文件')
+    const originalFileName = normalizeOriginalFileName(file.originalname)
     const max = Number(process.env.MAX_FILE_SIZE_MB || 20) * 1024 * 1024
     if (file.size > max) throw new BadRequestException('文件超过大小限制')
-    const extension = extname(file.originalname).toLowerCase()
+    const extension = extname(originalFileName).toLowerCase()
     if (!allowedExtensions.has(extension) || !allowedMimes.has(file.mimetype)) {
       throw new BadRequestException('文件格式不支持')
     }
@@ -72,7 +90,7 @@ export class FilesService {
         activationSessionId,
         ownerType: studentId ? 'student' : 'activation_session',
         ownerId: studentId || activationSessionId!,
-        originalFileName: file.originalname.replace(/[^\p{L}\p{N}._ -]/gu, '_'),
+        originalFileName,
         storedFileName,
         mimeType: file.mimetype,
         fileSize: file.size,
