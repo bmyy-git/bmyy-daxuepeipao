@@ -5,15 +5,6 @@ import { compare, hash } from 'bcryptjs'
 import { PrismaService } from '../../shared/prisma.service'
 import type { AuthUser } from './auth.types'
 
-const parseNfcParam = (value: string, batchCode?: string) => {
-  const normalized = value.trim()
-  const embeddedBatch = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: (batchCode || embeddedBatch || '').trim() || undefined,
-  }
-}
-
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService, private readonly jwt: JwtService) {}
@@ -34,10 +25,9 @@ export class AuthService {
     return this.issue(user)
   }
 
-  async cardLogin(cardId: string, password: string, idh?: string, rawBatchCode?: string) {
-    const parsed = parseNfcParam(cardId, rawBatchCode)
+  async cardLogin(cardId: string, password: string, idh?: string) {
     const card = await this.prisma.nfcCard.findUnique({
-      where: { idd: parsed.idd },
+      where: { idd: cardId.trim() },
       include: {
         bindings: {
           where: { status: 'active' },
@@ -47,9 +37,6 @@ export class AuthService {
       },
     })
     if (!card || (idh && card.idh !== idh.trim())) {
-      throw new UnauthorizedException('卡号或密码错误')
-    }
-    if (parsed.batchCode && card.batchCode && card.batchCode !== parsed.batchCode) {
       throw new UnauthorizedException('卡号或密码错误')
     }
     if (card.status !== CardStatus.ACTIVE) {

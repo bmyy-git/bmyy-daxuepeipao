@@ -19,10 +19,10 @@ import { store } from '../store'
       <div class="card-header"><div><h2>NFC 卡片生命周期</h2><p>卡片状态与学生业务阶段分离管理。</p></div></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>卡片</th><th>IDD</th><th>批次</th><th>IDH</th><th>类型</th><th>状态</th><th>操作</th></tr></thead>
+          <thead><tr><th>卡片</th><th>IDD</th><th>IDH</th><th>类型</th><th>状态</th><th>操作</th></tr></thead>
           <tbody>
             <tr v-for="card in store.state.cards" :key="card.idd">
-              <td><strong>{{ card.label }}</strong></td><td>{{ card.idd }}</td><td>{{ card.batchCode || '-' }}</td><td>{{ card.idh }}</td><td>{{ card.type }}</td>
+              <td><strong>{{ card.label }}</strong></td><td>{{ card.idd }}</td><td>{{ card.idh }}</td><td>{{ card.type }}</td>
               <td><StatusBadge :tone="card.status === 'active' ? 'green' : 'red'" :label="card.status === 'active' ? '正常' : '已挂失'" /></td>
               <td><button class="text-link table-action" @click="store.updateCardStatus(card.idd, card.status === 'active' ? 'lost' : 'active')">{{ card.status === 'active' ? '挂失' : '解挂' }}</button></td>
             </tr>

@@ -7,21 +7,7 @@ import { store } from '../store'
 const route = useRoute()
 const router = useRouter()
 const mode = ref<'card' | 'staff'>(route.query.mode === 'staff' ? 'staff' : 'card')
-function parseNfcParam(value: string, explicitBatchCode = '') {
-  const normalized = value.trim()
-  const embeddedBatchCode = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: explicitBatchCode.trim() || embeddedBatchCode || '',
-  }
-}
-
-const parsedCard = parseNfcParam(
-  String(route.query.idd || route.query.cardId || ''),
-  String(route.query.batchCode || route.query.batch || ''),
-)
-const cardId = ref(parsedCard.idd)
-const batchCode = ref(parsedCard.batchCode)
+const cardId = ref(String(route.query.idd || route.query.cardId || '').trim())
 const idh = ref(String(route.query.idh || ''))
 const cardPassword = ref('')
 const identifier = ref('')
@@ -36,7 +22,7 @@ async function submit() {
   error.value = ''
   try {
     const next = mode.value === 'card'
-      ? await store.loginWithCard(cardId.value, cardPassword.value, idh.value || undefined, batchCode.value || undefined)
+      ? await store.loginWithCard(cardId.value, cardPassword.value, idh.value || undefined)
       : await store.loginWithPassword(identifier.value, password.value)
     await router.replace(String(route.query.redirect || next))
   } catch (reason) {

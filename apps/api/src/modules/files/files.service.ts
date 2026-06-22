@@ -20,14 +20,6 @@ const allowedMimes = new Set([
   'image/jpeg',
   'image/png',
 ])
-const parseNfcParam = (value: string, batchCode?: string) => {
-  const normalized = value.trim()
-  const embeddedBatch = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: (batchCode || embeddedBatch || '').trim() || undefined,
-  }
-}
 
 export function normalizeOriginalFileName(originalName: string) {
   const decodedName = decodePossiblyMojibakeFileName(originalName)
@@ -50,20 +42,16 @@ function decodePossiblyMojibakeFileName(fileName: string) {
 export class FilesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createActivationSession(cardId: string, idh?: string, rawBatchCode?: string) {
-    const parsed = parseNfcParam(cardId, rawBatchCode)
-    const card = await this.prisma.nfcCard.findUnique({ where: { idd: parsed.idd } })
+  async createActivationSession(cardId: string, idh?: string) {
+    const normalizedCardId = cardId.trim()
+    const card = await this.prisma.nfcCard.findUnique({ where: { idd: normalizedCardId } })
     if (!card || (idh && card.idh !== idh) || card.status !== 'UNBOUND') {
       throw new BadRequestException('卡片不可创建激活会话')
     }
-    if (parsed.batchCode && card.batchCode && card.batchCode !== parsed.batchCode) {
-      throw new BadRequestException('卡片批次号不匹配')
-    }
     return this.prisma.activationSession.create({
       data: {
-        cardId: parsed.idd,
+        cardId: normalizedCardId,
         idh: idh || card.idh,
-        batchCode: parsed.batchCode || card.batchCode,
         draft: {},
         expiresAt: new Date(Date.now() + 7 * 86400000),
       },

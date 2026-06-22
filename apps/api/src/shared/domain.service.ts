@@ -7,7 +7,6 @@ import {
 import {
   BonusStatus,
   CardStatus,
-  CardType,
   Prisma,
   ReviewStatus,
   RevisionStatus,
@@ -25,26 +24,15 @@ import { canSubmitTask, nextSopVersion, reviewedTaskStatus } from './domain-rule
 const lower = (value: string) => value.toLowerCase()
 const jsonArray = (value: Prisma.JsonValue | null | undefined): string[] =>
   Array.isArray(value) ? value.map(String) : []
-const parseNfcParam = (value?: string, batchCode?: string) => {
-  const normalized = (value || '').trim()
-  const embeddedBatch = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: (batchCode || embeddedBatch || '').trim() || undefined,
-  }
-}
 
 @Injectable()
 export class DomainService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async resolveNfc(rawIdd?: string, idh?: string, ip?: string, userAgent?: string, rawBatchCode?: string) {
-    const parsed = parseNfcParam(rawIdd, rawBatchCode)
-    const idd = parsed.idd
-    const batchCode = parsed.batchCode
+  async resolveNfc(rawIdd?: string, idh?: string, ip?: string, userAgent?: string) {
+    const idd = (rawIdd || '').trim()
     if (idd && !idh) {
-      const card = await this.findNfcCard(idd, batchCode)
-      const cardWithBindings = card && await this.prisma.nfcCard.findUnique({
+      const card = await this.prisma.nfcCard.findUnique({
         where: { idd },
         include: {
           bindings: {
@@ -54,29 +42,25 @@ export class DomainService {
           },
         },
       })
-      if (!cardWithBindings) {
-        await this.logNfc(idd, '', 'card_not_found', ip, userAgent, batchCode)
+      if (!card) {
+        await this.logNfc(idd, '', 'card_not_found', ip, userAgent)
         return { status: 'card_not_found', redirectTo: 'error', message: '这张卡片还没有准备好' }
       }
-      if (batchCode && cardWithBindings.batchCode && cardWithBindings.batchCode !== batchCode) {
-        await this.logNfc(idd, cardWithBindings.idh, 'batch_mismatch', ip, userAgent, batchCode)
-        return { status: 'batch_mismatch', redirectTo: 'error', message: '卡片批次号不匹配' }
+      if (card.status !== CardStatus.ACTIVE && card.status !== CardStatus.UNBOUND) {
+        await this.logNfc(idd, card.idh, lower(card.status), ip, userAgent)
+        return { status: lower(card.status), redirectTo: 'error', message: '该卡片当前不可用' }
       }
-      if (cardWithBindings.status !== CardStatus.ACTIVE && cardWithBindings.status !== CardStatus.UNBOUND) {
-        await this.logNfc(idd, cardWithBindings.idh, lower(cardWithBindings.status), ip, userAgent, batchCode)
-        return { status: lower(cardWithBindings.status), redirectTo: 'error', message: '该卡片当前不可用' }
-      }
-      const binding = cardWithBindings.bindings[0]
+      const binding = card.bindings[0]
       if (!binding) {
-        await this.logNfc(idd, cardWithBindings.idh, 'unbound', ip, userAgent, batchCode)
-        return { status: 'unbound', redirectTo: 'activate', cardType: lower(cardWithBindings.type), batchCode }
+        await this.logNfc(idd, card.idh, 'unbound', ip, userAgent)
+        return { status: 'unbound', redirectTo: 'activate', cardType: lower(card.type) }
       }
       if (binding.cardType === 'PARENT_FAMILY') {
         const relation = await this.prisma.parentRelation.findFirst({
           where: { studentId: binding.studentId, status: 'ACTIVE' },
         })
         const allowed = Boolean(relation && binding.student.parentConsent)
-        await this.logNfc(idd, cardWithBindings.idh, allowed ? 'parent' : 'parent_revoked', ip, userAgent, batchCode)
+        await this.logNfc(idd, card.idh, allowed ? 'parent' : 'parent_revoked', ip, userAgent)
         return {
           status: allowed ? 'active' : 'revoked',
           redirectTo: allowed ? 'parent' : 'error',
@@ -92,7 +76,7 @@ export class DomainService {
         PAUSED: 'error',
         GRADUATED: 'growth',
       }
-      await this.logNfc(idd, cardWithBindings.idh, lower(binding.student.stage), ip, userAgent, batchCode)
+      await this.logNfc(idd, card.idh, lower(binding.student.stage), ip, userAgent)
       return {
         status: lower(binding.student.stage),
         redirectTo: routeByStage[binding.student.stage],
@@ -112,28 +96,24 @@ export class DomainService {
       },
     })
     if (!card || card.idh !== idh) {
-      await this.logNfc(idd, idh, 'card_not_found', ip, userAgent, batchCode)
+      await this.logNfc(idd, idh, 'card_not_found', ip, userAgent)
       return { status: 'card_not_found', redirectTo: 'error', message: '这张卡片还没有准备好' }
     }
-    if (batchCode && card.batchCode && card.batchCode !== batchCode) {
-      await this.logNfc(idd, idh, 'batch_mismatch', ip, userAgent, batchCode)
-      return { status: 'batch_mismatch', redirectTo: 'error', message: '卡片批次号不匹配' }
-    }
     if (card.status !== CardStatus.ACTIVE && card.status !== CardStatus.UNBOUND) {
-      await this.logNfc(idd, idh, lower(card.status), ip, userAgent, batchCode)
+      await this.logNfc(idd, idh, lower(card.status), ip, userAgent)
       return { status: lower(card.status), redirectTo: 'error', message: '该卡片当前不可用' }
     }
     const binding = card.bindings[0]
     if (!binding) {
-      await this.logNfc(idd, idh, 'unbound', ip, userAgent, batchCode)
-      return { status: 'unbound', redirectTo: 'activate', cardType: lower(card.type), batchCode }
+      await this.logNfc(idd, idh, 'unbound', ip, userAgent)
+      return { status: 'unbound', redirectTo: 'activate', cardType: lower(card.type) }
     }
     if (binding.cardType === 'PARENT_FAMILY') {
       const relation = await this.prisma.parentRelation.findFirst({
         where: { studentId: binding.studentId, status: 'ACTIVE' },
       })
       const allowed = Boolean(relation && binding.student.parentConsent)
-      await this.logNfc(idd, idh, allowed ? 'parent' : 'parent_revoked', ip, userAgent, batchCode)
+      await this.logNfc(idd, idh, allowed ? 'parent' : 'parent_revoked', ip, userAgent)
       return {
         status: allowed ? 'active' : 'revoked',
         redirectTo: allowed ? 'parent' : 'error',
@@ -149,7 +129,7 @@ export class DomainService {
       PAUSED: 'error',
       GRADUATED: 'growth',
     }
-    await this.logNfc(idd, idh, lower(binding.student.stage), ip, userAgent, batchCode)
+    await this.logNfc(idd, idh, lower(binding.student.stage), ip, userAgent)
     return {
       status: lower(binding.student.stage),
       redirectTo: routeByStage[binding.student.stage],
@@ -158,23 +138,11 @@ export class DomainService {
     }
   }
 
-  private async findNfcCard(idd: string, batchCode?: string) {
-    const card = await this.prisma.nfcCard.findUnique({ where: { idd } })
-    if (card) {
-      if (batchCode && !card.batchCode) {
-        return this.prisma.nfcCard.update({ where: { idd }, data: { batchCode } })
-      }
-      return card
-    }
-    return null
-  }
-
-  private async logNfc(idd: string, idh: string, status: string, ip?: string, userAgent?: string, batchCode?: string) {
+  private async logNfc(idd: string, idh: string, status: string, ip?: string, userAgent?: string) {
     await this.prisma.nfcAccessLog.create({
       data: {
         cardId: await this.prisma.nfcCard.findUnique({ where: { idd } }).then((card) => card?.idd),
         idh,
-        batchCode,
         resolvedStatus: status,
         ip,
         userAgent,
@@ -329,7 +297,6 @@ export class DomainService {
       cards: student.cards.map((binding) => ({
         idd: binding.card.idd,
         idh: binding.card.idh,
-        batchCode: binding.card.batchCode,
         type: lower(binding.cardType),
         label: binding.card.label,
         status: lower(binding.card.status),
@@ -382,7 +349,6 @@ export class DomainService {
   async activateStudent(body: {
     idd: string
     idh: string
-    batchCode?: string
     name: string
     phone: string
     email?: string
@@ -396,10 +362,8 @@ export class DomainService {
     privacyAgreed: boolean
     consentVersion?: string
   }) {
-    const parsed = parseNfcParam(body.idd, body.batchCode)
-    const card = await this.prisma.nfcCard.findUnique({ where: { idd: parsed.idd }, include: { bindings: true } })
+    const card = await this.prisma.nfcCard.findUnique({ where: { idd: body.idd.trim() }, include: { bindings: true } })
     if (!card || (body.idh && card.idh !== body.idh)) throw new BadRequestException('卡片不存在或编号不匹配')
-    if (parsed.batchCode && card.batchCode && card.batchCode !== parsed.batchCode) throw new BadRequestException('卡片批次号不匹配')
     if (!body.privacyAgreed) throw new BadRequestException('必须同意隐私授权后才能激活')
     if (card.status !== CardStatus.UNBOUND || card.bindings.some((item) => item.status === 'active')) {
       throw new BadRequestException('卡片已经激活')

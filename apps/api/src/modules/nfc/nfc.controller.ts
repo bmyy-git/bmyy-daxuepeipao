@@ -14,11 +14,9 @@ export class NfcController {
     @Query('idh') idh: string,
     @Query('id1') id1: string,
     @Query('id2') id2: string,
-    @Query('batchCode') batchCode: string,
-    @Query('batch') batch: string,
     @Ip() ip: string,
     @Req() request: Request,
   ) {
-    return this.domain.resolveNfc(idd || id1, idh || id2, ip, request.headers['user-agent'], batchCode || batch)
+    return this.domain.resolveNfc(idd || id1, idh || id2, ip, request.headers['user-agent'])
   }
 }

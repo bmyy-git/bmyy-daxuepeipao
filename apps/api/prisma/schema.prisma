@@ -173,7 +173,6 @@ model ActivationSession {
   id        String     @id @default(cuid())
   cardId    String
   idh       String
-  batchCode String?
   status    String     @default("active")
   draft     Json
   expiresAt DateTime
@@ -204,7 +203,6 @@ model Mentor {
 model NfcCard {
   idd         String       @id
   idh         String       @unique
-  batchCode   String?
   type        CardType
   label       String
   status      CardStatus   @default(UNBOUND)
@@ -235,7 +233,6 @@ model NfcAccessLog {
   cardId         String?
   card           NfcCard? @relation(fields: [cardId], references: [idd])
   idh            String?
-  batchCode      String?
   resolvedStatus String
   ip             String?
   userAgent      String?

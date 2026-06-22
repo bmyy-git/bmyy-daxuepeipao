@@ -18,15 +18,6 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const showNfcPrompt = ref(false)
 
-function parseNfcParam(value: string, explicitBatchCode = '') {
-  const normalized = value.trim()
-  const embeddedBatchCode = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: explicitBatchCode.trim() || embeddedBatchCode || '',
-  }
-}
-
 const enrollmentSteps = [
   {
     number: '1',
@@ -83,15 +74,13 @@ const features = [
 
 onMounted(() => {
   const params = new URLSearchParams(window.location.search)
-  const parsed = parseNfcParam(params.get('idd') || params.get('id1') || '', params.get('batchCode') || params.get('batch') || '')
-  const idd = parsed.idd
+  const idd = (params.get('idd') || params.get('id1') || '').trim()
   const idh = params.get('idh') || params.get('id2') || ''
   if (idd) {
     router.replace({
       path: '/entry',
       query: {
         idd,
-        ...(parsed.batchCode ? { batchCode: parsed.batchCode } : {}),
         ...(idh ? { idh } : {}),
       },
     })

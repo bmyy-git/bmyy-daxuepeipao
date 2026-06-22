@@ -135,7 +135,6 @@ export interface Message {
 export interface Card {
   idd: string
   idh: string
-  batchCode?: string | null
   type: 'student_primary' | 'student_secondary' | 'parent_family'
   label: string
   status: CardStatus

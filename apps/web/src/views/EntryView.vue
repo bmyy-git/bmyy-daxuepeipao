@@ -7,31 +7,17 @@ const route = useRoute()
 const router = useRouter()
 const error = ref('')
 
-function parseNfcParam(value: string, explicitBatchCode = '') {
-  const normalized = value.trim()
-  const embeddedBatchCode = normalized.length >= 18 ? normalized.slice(14, 18) : ''
-  return {
-    idd: normalized.length >= 18 ? normalized.slice(0, 14) : normalized,
-    batchCode: explicitBatchCode.trim() || embeddedBatchCode || '',
-  }
-}
-
 onMounted(async () => {
   try {
-    const parsed = parseNfcParam(
-      String(route.query.idd || route.query.id1 || ''),
-      String(route.query.batchCode || route.query.batch || ''),
-    )
-    const idd = parsed.idd
-    const batchCode = parsed.batchCode
+    const idd = String(route.query.idd || route.query.id1 || '').trim()
     const idh = String(route.query.idh || route.query.id2 || '')
     const result = await apiRequest<{ redirectTo: string; cardType?: string; message?: string }>(
-      `/nfc/resolve?idd=${encodeURIComponent(idd)}&idh=${encodeURIComponent(idh)}&batchCode=${encodeURIComponent(batchCode)}`,
+      `/nfc/resolve?idd=${encodeURIComponent(idd)}&idh=${encodeURIComponent(idh)}`,
       {},
       '',
     )
     if (result.redirectTo === 'activate') {
-      await router.replace({ path: '/activate', query: { idd, ...(batchCode ? { batchCode } : {}), idh } })
+      await router.replace({ path: '/activate', query: { idd, idh } })
       return
     }
     if (result.redirectTo === 'error') {
@@ -50,7 +36,6 @@ onMounted(async () => {
       query: {
         mode: 'card',
         idd,
-        ...(batchCode ? { batchCode } : {}),
         ...(idh ? { idh } : {}),
         redirect: routeMap[result.redirectTo] || '/',
       },
