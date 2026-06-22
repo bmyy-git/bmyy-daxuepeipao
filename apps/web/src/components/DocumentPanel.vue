@@ -4,11 +4,13 @@ import { onMounted, ref } from 'vue'
 import { store } from '../store'
 import type { DocumentFile } from '../types'
 
-defineProps<{
+withDefaults(defineProps<{
   title: string
   description: string
   allowDownload?: boolean
-}>()
+}>(), {
+  allowDownload: true,
+})
 
 const documents = ref<DocumentFile[]>([])
 const selectedFiles = ref<File[]>([])

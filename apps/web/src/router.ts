@@ -24,7 +24,7 @@ export const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0 }),
   routes: [
-    { path: '/', component: LandingView, meta: { public: true } },
+    { path: '/', component: LandingView, meta: { public: true, bare: true } },
     { path: '/login', component: LoginView, meta: { public: true, bare: true } },
     { path: '/entry', component: EntryView, meta: { public: true } },
     { path: '/activate', component: ActivationView, meta: { public: true, bare: true } },
