@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import { createHash, randomUUID } from 'crypto'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { extname, resolve } from 'path'
 import type { Express } from 'express'
 import { Prisma, Role } from '@prisma/client'
@@ -149,6 +149,18 @@ export class FilesService {
       throw new ForbiddenException()
     }
     return { document, data: await readFile(document.storagePath) }
+  }
+
+  async delete(user: AuthUser, id: string) {
+    const document = await this.prisma.document.findUnique({ where: { id } })
+    if (!document) throw new NotFoundException('文件不存在')
+    if (user.role !== Role.ADMIN && user.role !== Role.SUPER_ADMIN) {
+      const studentId = await this.studentIdFor(user)
+      if (document.studentId !== studentId) throw new ForbiddenException()
+    }
+    await this.prisma.document.delete({ where: { id } })
+    await rm(document.storagePath, { force: true })
+    return { success: true }
   }
 
   private async activeSession(id: string) {

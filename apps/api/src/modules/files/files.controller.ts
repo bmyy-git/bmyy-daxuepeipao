@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -80,5 +81,10 @@ export class FilesController {
       `attachment; filename*=UTF-8''${encodeURIComponent(result.document.originalFileName)}`,
     )
     response.send(result.data)
+  }
+
+  @Delete('files/:id')
+  delete(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.files.delete(user, id)
   }
 }

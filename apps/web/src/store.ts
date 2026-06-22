@@ -210,6 +210,10 @@ async function downloadDocument(document: Pick<DocumentFile, 'id' | 'originalFil
   URL.revokeObjectURL(url)
 }
 
+async function deleteDocument(id: string) {
+  await apiRequest<{ success: boolean }>(`/files/${id}`, { method: 'DELETE' })
+}
+
 async function startTask(taskId: string) {
   await apiRequest(`/tasks/${taskId}/start`, { method: 'POST' })
   await loadState()
@@ -330,6 +334,7 @@ export const store = {
   uploadDocument,
   listDocuments,
   downloadDocument,
+  deleteDocument,
   startTask,
   submitTask,
   reviewSubmission,

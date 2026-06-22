@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, FileText, UploadCloud } from '@lucide/vue'
+import { Download, FileText, Trash2, UploadCloud } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { store } from '../store'
 import type { DocumentFile } from '../types'
@@ -8,13 +8,16 @@ withDefaults(defineProps<{
   title: string
   description: string
   allowDownload?: boolean
+  allowDelete?: boolean
 }>(), {
   allowDownload: true,
+  allowDelete: false,
 })
 
 const documents = ref<DocumentFile[]>([])
 const selectedFiles = ref<File[]>([])
 const loading = ref(false)
+const deletingId = ref('')
 const message = ref('')
 const error = ref('')
 
@@ -60,6 +63,22 @@ async function download(document: DocumentFile) {
   }
 }
 
+async function remove(document: DocumentFile) {
+  if (!window.confirm(`确认删除“${document.originalFileName}”？`)) return
+  deletingId.value = document.id
+  message.value = ''
+  error.value = ''
+  try {
+    await store.deleteDocument(document.id)
+    await refreshDocuments()
+    message.value = '资料已删除'
+  } catch (reason) {
+    error.value = reason instanceof Error ? reason.message : '文件删除失败'
+  } finally {
+    deletingId.value = ''
+  }
+}
+
 onMounted(async () => {
   try {
     await refreshDocuments()
@@ -97,9 +116,19 @@ onMounted(async () => {
           <strong>{{ document.originalFileName }}</strong>
           <span>{{ formatSize(document.fileSize) }} · {{ document.status }} · {{ new Date(document.createdAt).toLocaleString('zh-CN') }}</span>
         </div>
-        <button v-if="allowDownload" class="btn btn-secondary" @click="download(document)">
-          <Download :size="17" />下载
-        </button>
+        <div class="document-actions">
+          <button v-if="allowDownload" class="btn btn-secondary" @click="download(document)">
+            <Download :size="17" />下载
+          </button>
+          <button
+            v-if="allowDelete"
+            class="btn btn-danger"
+            :disabled="deletingId === document.id"
+            @click="remove(document)"
+          >
+            <Trash2 :size="17" />{{ deletingId === document.id ? '删除中...' : '删除' }}
+          </button>
+        </div>
       </article>
     </div>
   </section>
@@ -120,9 +149,11 @@ onMounted(async () => {
 }
 .document-row strong, .document-row span { display: block; }
 .document-row span { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.document-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .inline-success { color: #166534; font-size: 13px; font-weight: 750; }
 .inline-error { color: #9f1239; font-size: 13px; font-weight: 750; }
 @media (max-width: 760px) {
   .document-row { align-items: stretch; flex-direction: column; }
+  .document-actions { justify-content: flex-start; }
 }
 </style>
