@@ -2,6 +2,7 @@ import { computed, reactive } from 'vue'
 import { apiRequest, cardLogin, changePassword as requestPasswordChange, clearToken, getToken, passwordLogin, setToken } from './api'
 import type {
   AppState,
+  DocumentListResult,
   DocumentFile,
   GoalRevision,
   PeriodReview,
@@ -190,8 +191,13 @@ async function uploadDocument(file: File) {
   return apiRequest<DocumentFile>('/files/upload-auth', { method: 'POST', body: form })
 }
 
-async function listDocuments() {
-  return apiRequest<DocumentFile[]>('/files')
+async function listDocuments(options: { school?: string; cursor?: string; take?: number } = {}) {
+  const params = new URLSearchParams()
+  if (options.school) params.set('school', options.school)
+  if (options.cursor) params.set('cursor', options.cursor)
+  if (options.take) params.set('take', String(options.take))
+  const query = params.toString()
+  return apiRequest<DocumentListResult>(`/files${query ? `?${query}` : ''}`)
 }
 
 async function downloadDocument(document: Pick<DocumentFile, 'id' | 'originalFileName'>) {

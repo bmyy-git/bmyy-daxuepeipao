@@ -9,17 +9,24 @@ withDefaults(defineProps<{
   description: string
   allowDownload?: boolean
   allowDelete?: boolean
+  allowSchoolFilter?: boolean
 }>(), {
   allowDownload: true,
   allowDelete: false,
+  allowSchoolFilter: false,
 })
 
 const documents = ref<DocumentFile[]>([])
 const selectedFiles = ref<File[]>([])
+const schools = ref<string[]>([])
+const selectedSchool = ref('')
+const nextCursor = ref<string | null>(null)
 const loading = ref(false)
+const loadingMore = ref(false)
 const deletingId = ref('')
 const message = ref('')
 const error = ref('')
+const pageSize = 20
 
 function formatSize(size: number) {
   if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`
@@ -28,7 +35,33 @@ function formatSize(size: number) {
 }
 
 async function refreshDocuments() {
-  documents.value = await store.listDocuments()
+  const result = await store.listDocuments({
+    school: selectedSchool.value || undefined,
+    take: pageSize,
+  })
+  documents.value = result.items
+  schools.value = result.schools
+  nextCursor.value = result.nextCursor
+}
+
+async function loadMoreDocuments() {
+  if (!nextCursor.value) return
+  loadingMore.value = true
+  error.value = ''
+  try {
+    const result = await store.listDocuments({
+      school: selectedSchool.value || undefined,
+      cursor: nextCursor.value,
+      take: pageSize,
+    })
+    documents.value = [...documents.value, ...result.items]
+    schools.value = result.schools
+    nextCursor.value = result.nextCursor
+  } catch (reason) {
+    error.value = reason instanceof Error ? reason.message : '资料列表加载失败'
+  } finally {
+    loadingMore.value = false
+  }
 }
 
 function selectFiles(event: Event) {
@@ -95,6 +128,17 @@ onMounted(async () => {
       <FileText />
     </div>
 
+    <div v-if="allowSchoolFilter" class="document-toolbar">
+      <label class="school-filter">
+        <span>学校</span>
+        <select v-model="selectedSchool" @change="refreshDocuments">
+          <option value="">全部学校</option>
+          <option v-for="school in schools" :key="school" :value="school">{{ school }}</option>
+        </select>
+      </label>
+      <span class="muted">当前显示 {{ documents.length }} 条</span>
+    </div>
+
     <label class="document-upload">
       <input type="file" multiple @change="selectFiles" />
       <UploadCloud :size="24" />
@@ -114,6 +158,9 @@ onMounted(async () => {
       <article v-for="document in documents" :key="document.id" class="document-row">
         <div>
           <strong>{{ document.originalFileName }}</strong>
+          <small v-if="document.student" class="document-owner">
+            {{ document.student.school }} · {{ document.student.name }} · {{ document.student.major }}
+          </small>
           <span>{{ formatSize(document.fileSize) }} · {{ document.status }} · {{ new Date(document.createdAt).toLocaleString('zh-CN') }}</span>
         </div>
         <div class="document-actions">
@@ -130,6 +177,9 @@ onMounted(async () => {
           </button>
         </div>
       </article>
+      <button v-if="nextCursor" class="btn btn-secondary load-more" :disabled="loadingMore" @click="loadMoreDocuments">
+        {{ loadingMore ? '加载中...' : '加载更多' }}
+      </button>
     </div>
   </section>
 </template>
@@ -142,18 +192,32 @@ onMounted(async () => {
 }
 .document-upload input { display: none; }
 .document-upload span { color: var(--muted); font-size: 12px; }
+.document-toolbar {
+  display: flex; align-items: end; justify-content: space-between; gap: 14px;
+  margin-bottom: 16px;
+}
+.school-filter { display: grid; gap: 6px; color: var(--ink); font-weight: 800; }
+.school-filter span { font-size: 12px; color: var(--muted); }
+.school-filter select {
+  min-width: 220px; min-height: 40px; padding: 0 12px;
+  border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white;
+}
 .document-list { display: grid; gap: 10px; }
 .document-row {
   display: flex; justify-content: space-between; align-items: center; gap: 14px;
   padding: 13px 0; border-top: 1px solid var(--line);
 }
-.document-row strong, .document-row span { display: block; }
+.document-row strong, .document-row span, .document-owner { display: block; }
+.document-owner { margin-top: 4px; color: var(--brand); font-size: 12px; font-weight: 750; }
 .document-row span { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .document-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.load-more { justify-self: center; margin-top: 4px; }
 .inline-success { color: #166534; font-size: 13px; font-weight: 750; }
 .inline-error { color: #9f1239; font-size: 13px; font-weight: 750; }
 @media (max-width: 760px) {
   .document-row { align-items: stretch; flex-direction: column; }
   .document-actions { justify-content: flex-start; }
+  .document-toolbar { align-items: stretch; flex-direction: column; }
+  .school-filter select { min-width: 0; width: 100%; }
 }
 </style>

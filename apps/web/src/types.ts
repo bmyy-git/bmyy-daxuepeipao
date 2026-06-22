@@ -149,6 +149,18 @@ export interface DocumentFile {
   status: string
   summary?: string | null
   createdAt: string
+  student?: {
+    name: string
+    school: string
+    college: string
+    major: string
+  } | null
+}
+
+export interface DocumentListResult {
+  items: DocumentFile[]
+  nextCursor: string | null
+  schools: string[]
 }
 
 export interface AppState {

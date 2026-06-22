@@ -41,7 +41,14 @@ import { store } from '../store'
         <div class="role-list"><span>超级管理员</span><span>管理员</span><span>导师</span><span>项目老师</span><span>辅导员</span><span>学校老师</span><span>专属客服</span><span>学生</span><span>家长</span></div>
       </section>
     </div>
-    <DocumentPanel class="section-gap" title="资料文档管理" description="上传学生补充资料，并下载或删除已归档文档。" allow-download allow-delete />
+    <DocumentPanel
+      class="section-gap"
+      title="资料文档管理"
+      description="按学校查看学生补充资料，并下载或删除已归档文档。"
+      allow-download
+      allow-delete
+      allow-school-filter
+    />
     <div class="notice section-gap">当前页面通过 JWT 调用独立 NestJS API，业务数据保存在 PostgreSQL；文件由后端私有存储，Dify 未配置时使用有明确标识的本地兜底回答。</div>
   </div>
 </template>

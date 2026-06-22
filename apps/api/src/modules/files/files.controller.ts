@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -68,8 +69,13 @@ export class FilesController {
   }
 
   @Get('files')
-  list(@CurrentUser() user: AuthUser) {
-    return this.files.list(user)
+  list(
+    @CurrentUser() user: AuthUser,
+    @Query('school') school?: string,
+    @Query('cursor') cursor?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.files.list(user, { school, cursor, take: take ? Number(take) : undefined })
   }
 
   @Get('files/:id/download')

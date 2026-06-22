@@ -106,9 +106,52 @@ export class FilesService {
     return this.upload(file, undefined, studentId)
   }
 
-  async list(user: AuthUser) {
+  async list(user: AuthUser, options: { school?: string; cursor?: string; take?: number } = {}) {
+    const take = Math.min(Math.max(options.take || 20, 1), 50)
     if (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN) {
-      return this.prisma.document.findMany({
+      const school = options.school?.trim()
+      const where: Prisma.DocumentWhereInput = school ? { student: { school } } : {}
+      const [documents, schools] = await Promise.all([
+        this.prisma.document.findMany({
+          where,
+          select: {
+            id: true,
+            originalFileName: true,
+            mimeType: true,
+            fileSize: true,
+            status: true,
+            summary: true,
+            createdAt: true,
+            student: {
+              select: {
+                name: true,
+                school: true,
+                college: true,
+                major: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: take + 1,
+          ...(options.cursor ? { cursor: { id: options.cursor }, skip: 1 } : {}),
+        }),
+        this.prisma.student.findMany({
+          select: { school: true },
+          distinct: ['school'],
+          orderBy: { school: 'asc' },
+        }),
+      ])
+      const hasMore = documents.length > take
+      const items = documents.slice(0, take)
+      return {
+        items,
+        nextCursor: hasMore ? items.at(-1)?.id || null : null,
+        schools: schools.map((item) => item.school).filter(Boolean),
+      }
+    }
+    const studentId = await this.studentIdFor(user)
+    const documents = await this.prisma.document.findMany({
+      where: { studentId },
         select: {
           id: true,
           originalFileName: true,
@@ -118,23 +161,17 @@ export class FilesService {
           summary: true,
           createdAt: true,
         },
-        orderBy: { createdAt: 'desc' },
-      })
-    }
-    const studentId = await this.studentIdFor(user)
-    return this.prisma.document.findMany({
-      where: { studentId },
-      select: {
-        id: true,
-        originalFileName: true,
-        mimeType: true,
-        fileSize: true,
-        status: true,
-        summary: true,
-        createdAt: true,
-      },
       orderBy: { createdAt: 'desc' },
+      take: take + 1,
+      ...(options.cursor ? { cursor: { id: options.cursor }, skip: 1 } : {}),
     })
+    const hasMore = documents.length > take
+    const items = documents.slice(0, take)
+    return {
+      items,
+      nextCursor: hasMore ? items.at(-1)?.id || null : null,
+      schools: [],
+    }
   }
 
   async download(user: AuthUser, id: string) {
