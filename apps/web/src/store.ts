@@ -59,12 +59,25 @@ const emptyState = (): AppState => ({
 
 const state = reactive<AppState>(emptyState())
 const loading = reactive({ active: false, error: '' })
-const ROLE_KEY = 'benmaoyaya_current_role'
+const LEGACY_ROLE_KEY = 'benmaoyaya_current_role'
 const roleFromApi = (role: string): Role => {
   const normalized = role.toLowerCase()
   if (normalized === 'mentor' || normalized === 'parent' || normalized === 'admin' || normalized === 'student') return normalized
   if (normalized === 'super_admin') return 'admin'
   return 'student'
+}
+
+function roleFromToken(token: string): Role | null {
+  const payload = token.split('.')[1]
+  if (!payload) return null
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const decoded = JSON.parse(atob(padded)) as { role?: string }
+    return decoded.role ? roleFromApi(decoded.role) : null
+  } catch {
+    return null
+  }
 }
 
 const roleHome: Record<Role, string> = {
@@ -109,26 +122,34 @@ async function loadState(role = state.currentRole) {
 }
 
 async function init() {
-  const rememberedRole = sessionStorage.getItem(ROLE_KEY) as Role | null
-  if (rememberedRole) state.currentRole = rememberedRole
-  if (getToken()) await loadState(state.currentRole)
+  sessionStorage.removeItem(LEGACY_ROLE_KEY)
+  const tokenRole = roleFromToken(getToken())
+  if (!tokenRole) {
+    clearToken()
+    Object.assign(state, emptyState())
+    return
+  }
+  state.currentRole = tokenRole
+  await loadState(tokenRole)
 }
 
 async function loginWithPassword(identifier: string, password: string) {
+  sessionStorage.removeItem(LEGACY_ROLE_KEY)
   const result = await passwordLogin(identifier, password)
   const role = roleFromApi(result.user.role)
+  Object.assign(state, emptyState())
   setToken(result.accessToken)
-  sessionStorage.setItem(ROLE_KEY, role)
   state.currentRole = role
   await loadState(role)
   return roleHome[role]
 }
 
 async function loginWithCard(cardId: string, password: string, idh?: string) {
+  sessionStorage.removeItem(LEGACY_ROLE_KEY)
   const result = await cardLogin(cardId, password, idh)
   const role = roleFromApi(result.user.role)
+  Object.assign(state, emptyState())
   setToken(result.accessToken)
-  sessionStorage.setItem(ROLE_KEY, role)
   state.currentRole = role
   await loadState(role)
   const routeMap: Record<string, string> = {
@@ -144,7 +165,7 @@ async function loginWithCard(cardId: string, password: string, idh?: string) {
 
 function logout() {
   clearToken()
-  sessionStorage.removeItem(ROLE_KEY)
+  sessionStorage.removeItem(LEGACY_ROLE_KEY)
   Object.assign(state, emptyState())
 }
 
@@ -161,12 +182,13 @@ async function activateStudent(
     consentVersion?: string
   },
 ) {
+  sessionStorage.removeItem(LEGACY_ROLE_KEY)
   const result = await apiRequest<{ accessToken: string }>('/students/activate', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, '')
+  Object.assign(state, emptyState())
   setToken(result.accessToken)
-  sessionStorage.setItem(ROLE_KEY, 'student')
   state.currentRole = 'student'
   await loadState('student')
 }

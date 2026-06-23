@@ -19,6 +19,15 @@ import TaskDetailView from './views/TaskDetailView.vue'
 import TasksView from './views/TasksView.vue'
 import WaitingView from './views/WaitingView.vue'
 import { getToken } from './api'
+import { store } from './store'
+import type { Role } from './types'
+
+const roleHome: Record<Role, string> = {
+  student: '/dashboard',
+  mentor: '/mentor',
+  parent: '/parent',
+  admin: '/admin/cards',
+}
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -28,17 +37,17 @@ export const router = createRouter({
     { path: '/login', component: LoginView, meta: { public: true, bare: true } },
     { path: '/entry', component: EntryView, meta: { public: true } },
     { path: '/activate', component: ActivationView, meta: { public: true, bare: true } },
-    { path: '/waiting', component: WaitingView, meta: { bare: true } },
-    { path: '/mentor-ready', component: MentorReadyView, meta: { bare: true } },
-    { path: '/dashboard', component: DashboardView },
-    { path: '/tasks', component: TasksView },
-    { path: '/tasks/:id', component: TaskDetailView },
-    { path: '/sop', component: SopView },
-    { path: '/reviews', component: ReviewsView },
-    { path: '/growth', component: GrowthView },
-    { path: '/ai', component: AiView },
-    { path: '/messages', component: MessagesView },
-    { path: '/profile', component: ProfileView },
+    { path: '/waiting', component: WaitingView, meta: { bare: true, role: 'student' } },
+    { path: '/mentor-ready', component: MentorReadyView, meta: { bare: true, role: 'student' } },
+    { path: '/dashboard', component: DashboardView, meta: { role: 'student' } },
+    { path: '/tasks', component: TasksView, meta: { role: 'student' } },
+    { path: '/tasks/:id', component: TaskDetailView, meta: { role: 'student' } },
+    { path: '/sop', component: SopView, meta: { role: 'student' } },
+    { path: '/reviews', component: ReviewsView, meta: { role: 'student' } },
+    { path: '/growth', component: GrowthView, meta: { role: 'student' } },
+    { path: '/ai', component: AiView, meta: { role: 'student' } },
+    { path: '/messages', component: MessagesView, meta: { role: 'student' } },
+    { path: '/profile', component: ProfileView, meta: { role: 'student' } },
     { path: '/account', component: AccountView },
     { path: '/parent', component: ParentView, meta: { role: 'parent' } },
     { path: '/mentor', component: MentorView, meta: { role: 'mentor' } },
@@ -49,6 +58,14 @@ export const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.meta.public || getToken()) return true
-  return { path: '/login', query: { redirect: to.fullPath } }
+  if (to.meta.public) return true
+  if (!getToken()) return { path: '/login', query: { redirect: to.fullPath } }
+
+  const requiredRole = to.meta.role as Role | undefined
+  const currentRole = store.state.currentRole
+  if (requiredRole && currentRole !== requiredRole) {
+    return { path: roleHome[currentRole] }
+  }
+
+  return true
 })

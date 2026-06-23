@@ -27,6 +27,7 @@ const route = useRoute()
 const router = useRouter()
 const role = computed(() => store.state.currentRole)
 const authenticated = computed(() => Boolean(getToken()))
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 const unread = computed(() => store.state.messages.filter((message) => !message.read).length)
 const roleLabel = computed(() => ({
   student: '学生',
@@ -100,25 +101,43 @@ const isActive = (to: string) => route.path === to || (to !== '/dashboard' && ro
         </RouterLink>
       </nav>
 
-      <nav v-else-if="authenticated" class="side-nav">
-        <RouterLink v-if="role === 'mentor'" to="/mentor" class="active">
+      <nav v-else-if="authenticated && role === 'mentor'" class="side-nav">
+        <RouterLink to="/mentor" class="active">
           <UsersRound :size="20" />导师工作台
         </RouterLink>
-        <RouterLink v-if="role === 'parent'" to="/parent" class="active">
+        <RouterLink to="/account" :class="{ active: isActive('/account') }">
+          <UserRound :size="20" />账号安全
+        </RouterLink>
+      </nav>
+
+      <nav v-else-if="authenticated && role === 'parent'" class="side-nav">
+        <RouterLink to="/parent" class="active">
           <HeartHandshake :size="20" />家长观察室
         </RouterLink>
-        <RouterLink v-if="role === 'admin'" to="/admin/cards" :class="{ active: isActive('/admin/cards') }">
+        <RouterLink to="/account" :class="{ active: isActive('/account') }">
+          <UserRound :size="20" />账号安全
+        </RouterLink>
+      </nav>
+
+      <nav v-else-if="authenticated && role === 'admin' && isAdminRoute" class="side-nav">
+        <RouterLink to="/admin/cards" :class="{ active: isActive('/admin/cards') }">
           <CreditCard :size="20" />卡片
         </RouterLink>
-        <RouterLink v-if="role === 'admin'" to="/admin/students" :class="{ active: isActive('/admin/students') }">
+        <RouterLink to="/admin/students" :class="{ active: isActive('/admin/students') }">
           <GraduationCap :size="20" />学生
         </RouterLink>
-        <RouterLink v-if="role === 'admin'" to="/admin/teachers" :class="{ active: isActive('/admin/teachers') }">
+        <RouterLink to="/admin/teachers" :class="{ active: isActive('/admin/teachers') }">
           <UsersRound :size="20" />老师
         </RouterLink>
-        <RouterLink v-if="role === 'admin'" to="/admin/documents" :class="{ active: isActive('/admin/documents') }">
+        <RouterLink to="/admin/documents" :class="{ active: isActive('/admin/documents') }">
           <FileText :size="20" />文档
         </RouterLink>
+        <RouterLink to="/account" :class="{ active: isActive('/account') }">
+          <UserRound :size="20" />账号安全
+        </RouterLink>
+      </nav>
+
+      <nav v-else-if="authenticated" class="side-nav">
         <RouterLink to="/account" :class="{ active: isActive('/account') }">
           <UserRound :size="20" />账号安全
         </RouterLink>
