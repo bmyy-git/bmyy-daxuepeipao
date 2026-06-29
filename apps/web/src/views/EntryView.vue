@@ -11,13 +11,29 @@ onMounted(async () => {
   try {
     const idd = String(route.query.idd || route.query.id1 || '').trim()
     const idh = String(route.query.idh || route.query.id2 || '')
-    const result = await apiRequest<{ redirectTo: string; cardType?: string; message?: string }>(
+    const result = await apiRequest<{ redirectTo: string; cardType?: string; idh?: string; message?: string }>(
       `/nfc/resolve?idd=${encodeURIComponent(idd)}&idh=${encodeURIComponent(idh)}`,
       {},
       '',
     )
+    const resolvedIdh = idh || result.idh || ''
+    if (result.redirectTo === 'login') {
+      await router.replace({
+        path: '/login',
+        query: {
+          mode: 'card',
+          idd,
+          ...(resolvedIdh ? { idh: resolvedIdh } : {}),
+        },
+      })
+      return
+    }
     if (result.redirectTo === 'activate') {
-      await router.replace({ path: '/activate', query: { idd, idh } })
+      await router.replace({ path: '/activate', query: { idd, idh: resolvedIdh } })
+      return
+    }
+    if (result.redirectTo === 'home') {
+      await router.replace('/')
       return
     }
     if (result.redirectTo === 'error') {
@@ -36,7 +52,7 @@ onMounted(async () => {
       query: {
         mode: 'card',
         idd,
-        ...(idh ? { idh } : {}),
+        ...(resolvedIdh ? { idh: resolvedIdh } : {}),
         redirect: routeMap[result.redirectTo] || '/',
       },
     })
