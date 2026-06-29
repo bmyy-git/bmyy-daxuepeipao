@@ -1,7 +1,9 @@
 import { Body, Controller, Param, Post } from '@nestjs/common'
+import { Role } from '@prisma/client'
 import { IsArray, IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthUser } from '../auth/auth.types'
+import { Roles } from '../auth/roles.decorator'
 import { DomainService } from '../../shared/domain.service'
 
 class SubmitTaskDto {
@@ -13,6 +15,7 @@ class SubmitTaskDto {
 }
 
 @Controller('tasks')
+@Roles(Role.STUDENT)
 export class TasksController {
   constructor(private readonly domain: DomainService) {}
 

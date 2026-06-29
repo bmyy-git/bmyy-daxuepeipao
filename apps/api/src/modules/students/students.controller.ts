@@ -1,15 +1,17 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common'
 import { Transform } from 'class-transformer'
+import { Role } from '@prisma/client'
 import { IsArray, IsBoolean, IsEmail, IsOptional, IsString, MinLength } from 'class-validator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { Public } from '../auth/public.decorator'
+import { Roles } from '../auth/roles.decorator'
 import type { AuthUser } from '../auth/auth.types'
 import { DomainService } from '../../shared/domain.service'
 import { AuthService } from '../auth/auth.service'
 
 class ActivateStudentDto {
   @IsString() idd!: string
-  @IsString() idh!: string
+  @IsString() @MinLength(1) idh!: string
   @IsString() @MinLength(2) name!: string
   @IsString() phone!: string
   @Transform(({ value }) => typeof value === 'string' && !value.trim() ? undefined : value)
@@ -55,21 +57,25 @@ export class StudentsController {
   }
 
   @Post('me/goals/revision')
+  @Roles(Role.STUDENT)
   reviseGoal(@CurrentUser() user: AuthUser, @Body() body: GoalRevisionDto) {
     return this.domain.submitGoalRevision(user, body.newGoals, body.reason)
   }
 
   @Patch('me/parent-consent')
+  @Roles(Role.STUDENT)
   parentConsent(@CurrentUser() user: AuthUser, @Body() body: ParentConsentDto) {
     return this.domain.setParentConsent(user, body.enabled)
   }
 
   @Patch('me/messages/:id/read')
+  @Roles(Role.STUDENT)
   markMessageRead(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.domain.markMessageRead(user, id)
   }
 
   @Patch('me/cards/:idd/status')
+  @Roles(Role.STUDENT)
   cardStatus(
     @CurrentUser() user: AuthUser,
     @Param('idd') idd: string,

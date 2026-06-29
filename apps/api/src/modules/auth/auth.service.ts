@@ -85,8 +85,8 @@ export class AuthService {
   }
 
   async demoLogin(role: 'student' | 'mentor' | 'parent' | 'admin') {
-    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_LOGIN !== 'true') {
-      throw new ForbiddenException('生产环境未启用演示登录')
+    if (process.env.ENABLE_DEMO_LOGIN !== 'true') {
+      throw new ForbiddenException('演示登录未启用')
     }
     const roleMap: Record<typeof role, Role> = {
       student: Role.STUDENT,

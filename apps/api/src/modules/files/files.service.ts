@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common'
 import { createHash, randomUUID } from 'crypto'
 import { mkdir, readFile, rm, writeFile } from 'fs/promises'
-import { extname, resolve } from 'path'
+import { extname, isAbsolute, relative, resolve } from 'path'
 import type { Express } from 'express'
 import { Prisma, Role } from '@prisma/client'
 import { PrismaService } from '../../shared/prisma.service'
@@ -42,28 +42,31 @@ function decodePossiblyMojibakeFileName(fileName: string) {
 export class FilesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createActivationSession(cardId: string, idh?: string) {
+  async createActivationSession(cardId: string, idh: string) {
     const normalizedCardId = cardId.trim()
+    const normalizedIdh = idh.trim()
     const card = await this.prisma.nfcCard.findUnique({ where: { idd: normalizedCardId } })
-    if (!card || (idh && card.idh !== idh) || card.status !== 'UNBOUND') {
+    if (!card || !normalizedIdh || card.idh !== normalizedIdh || card.status !== 'UNBOUND') {
       throw new BadRequestException('卡片不可创建激活会话')
     }
     return this.prisma.activationSession.create({
       data: {
         cardId: normalizedCardId,
-        idh: idh || card.idh,
+        idh: normalizedIdh,
         draft: {},
         expiresAt: new Date(Date.now() + 7 * 86400000),
       },
+      select: { id: true, expiresAt: true },
     })
   }
 
   async saveDraft(sessionId: string, draft: Record<string, unknown>) {
     const session = await this.activeSession(sessionId)
-    return this.prisma.activationSession.update({
+    await this.prisma.activationSession.update({
       where: { id: session.id },
       data: { draft: draft as Prisma.InputJsonValue },
     })
+    return { success: true }
   }
 
   async upload(file: Express.Multer.File, activationSessionId?: string, studentId?: string) {
@@ -82,7 +85,7 @@ export class FilesService {
     await mkdir(root, { recursive: true })
     const storedFileName = `${randomUUID()}${extension}`
     const storagePath = resolve(root, storedFileName)
-    if (!storagePath.startsWith(root)) throw new BadRequestException('非法文件路径')
+    if (!isPathInside(root, storagePath)) throw new BadRequestException('非法文件路径')
     await writeFile(storagePath, file.buffer)
     const sha256 = createHash('sha256').update(file.buffer).digest('hex')
     return this.prisma.document.create({
@@ -186,7 +189,7 @@ export class FilesService {
     ) {
       throw new ForbiddenException()
     }
-    return { document, data: await readFile(document.storagePath) }
+    return { document, data: await readFile(this.safeStoragePath(document.storagePath)) }
   }
 
   async delete(user: AuthUser, id: string) {
@@ -196,8 +199,9 @@ export class FilesService {
       const studentId = await this.studentIdFor(user)
       if (document.studentId !== studentId) throw new ForbiddenException()
     }
+    const storagePath = this.safeStoragePath(document.storagePath)
     await this.prisma.document.delete({ where: { id } })
-    await rm(document.storagePath, { force: true })
+    await rm(storagePath, { force: true })
     return { success: true }
   }
 
@@ -215,13 +219,16 @@ export class FilesService {
       const student = await this.prisma.student.findFirst({ where: { mentorId: user.mentorId } })
       if (student) return student.id
     }
-    if (user.parentRelationId) {
-      const relation = await this.prisma.parentRelation.findUnique({ where: { id: user.parentRelationId } })
-      if (relation?.status === 'ACTIVE') return relation.studentId
-    }
     const student = await this.prisma.student.findFirst()
     if (student && (user.role === Role.ADMIN || user.role === Role.SUPER_ADMIN)) return student.id
     throw new ForbiddenException()
+  }
+
+  private safeStoragePath(storagePath: string) {
+    const root = resolve(process.env.FILE_STORAGE_PATH || './uploads')
+    const candidate = resolve(storagePath)
+    if (!isPathInside(root, candidate)) throw new ForbiddenException('非法文件路径')
+    return candidate
   }
 
   private matchesMagic(buffer: Buffer, extension: string) {
@@ -233,4 +240,9 @@ export class FilesService {
     if (extension === '.docx') return buffer.subarray(0, 2).toString() === 'PK'
     return false
   }
+}
+
+function isPathInside(root: string, candidate: string) {
+  const pathFromRoot = relative(root, candidate)
+  return pathFromRoot === '' || (!pathFromRoot.startsWith('..') && !isAbsolute(pathFromRoot))
 }

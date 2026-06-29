@@ -23,9 +23,11 @@ services:
       NODE_ENV: production
       APP_PORT: 3000
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+      TRUST_PROXY_HOPS: 1
       DATABASE_URL: postgresql://${POSTGRES_USER:-benmaoyaya}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-benmaoyaya}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-replace-with-at-least-32-random-characters}
       JWT_ACCESS_EXPIRES_IN: 2h
+      ENABLE_DEMO_LOGIN: ${ENABLE_DEMO_LOGIN:-false}
       DIFY_API_BASE_URL: ${DIFY_API_BASE_URL:-}
       DIFY_API_KEY: ${DIFY_API_KEY:-}
       FILE_STORAGE_PATH: /app/uploads

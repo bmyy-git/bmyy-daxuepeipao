@@ -1,7 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common'
+import { Role } from '@prisma/client'
 import { IsInt, IsOptional, IsString, Max, Min, MinLength } from 'class-validator'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthUser } from '../auth/auth.types'
+import { Roles } from '../auth/roles.decorator'
 import { DomainService } from '../../shared/domain.service'
 
 class SubmitReviewDto {
@@ -16,6 +18,7 @@ class SubmitReviewDto {
 }
 
 @Controller('reviews')
+@Roles(Role.STUDENT)
 export class ReviewsController {
   constructor(private readonly domain: DomainService) {}
 

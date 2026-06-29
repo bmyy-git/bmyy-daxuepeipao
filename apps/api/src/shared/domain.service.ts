@@ -17,6 +17,7 @@ import {
   TaskStatus,
 } from '@prisma/client'
 import { hash } from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import type { AuthUser } from '../modules/auth/auth.types'
 import { PrismaService } from './prisma.service'
 import { canSubmitTask, nextSopVersion, reviewedTaskStatus } from './domain-rules'
@@ -31,6 +32,10 @@ export class DomainService {
 
   async resolveNfc(rawIdd?: string, idh?: string, ip?: string, userAgent?: string) {
     const idd = (rawIdd || '').trim()
+    idh = (idh || '').trim()
+    if (!idd || !idh) {
+      return { status: 'invalid_params', redirectTo: 'error', message: '卡片参数不完整' }
+    }
     if (idd && !idh) {
       const card = await this.prisma.nfcCard.findUnique({
         where: { idd },
@@ -80,7 +85,6 @@ export class DomainService {
       return {
         status: lower(binding.student.stage),
         redirectTo: routeByStage[binding.student.stage],
-        studentId: binding.studentId,
         cardType: lower(binding.cardType),
       }
     }
@@ -133,7 +137,6 @@ export class DomainService {
     return {
       status: lower(binding.student.stage),
       redirectTo: routeByStage[binding.student.stage],
-      studentId: binding.studentId,
       cardType: lower(binding.cardType),
     }
   }
@@ -362,13 +365,35 @@ export class DomainService {
     privacyAgreed: boolean
     consentVersion?: string
   }) {
-    const card = await this.prisma.nfcCard.findUnique({ where: { idd: body.idd.trim() }, include: { bindings: true } })
-    if (!card || (body.idh && card.idh !== body.idh)) throw new BadRequestException('卡片不存在或编号不匹配')
+    const normalizedIdd = body.idd.trim()
+    const normalizedIdh = body.idh.trim()
+    const card = await this.prisma.nfcCard.findUnique({ where: { idd: normalizedIdd }, include: { bindings: true } })
+    if (!card || !normalizedIdh || card.idh !== normalizedIdh) {
+      throw new BadRequestException('卡片不存在或编号不匹配')
+    }
     if (!body.privacyAgreed) throw new BadRequestException('必须同意隐私授权后才能激活')
     if (card.status !== CardStatus.UNBOUND || card.bindings.some((item) => item.status === 'active')) {
       throw new BadRequestException('卡片已经激活')
     }
+    if (body.activationSessionId) {
+      const session = await this.prisma.activationSession.findFirst({
+        where: {
+          id: body.activationSessionId,
+          cardId: normalizedIdd,
+          idh: normalizedIdh,
+          status: 'active',
+          expiresAt: { gt: new Date() },
+        },
+        select: { id: true },
+      })
+      if (!session) throw new BadRequestException('激活会话无效或不属于当前卡片')
+    }
     return this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.nfcCard.updateMany({
+        where: { idd: normalizedIdd, status: CardStatus.UNBOUND },
+        data: { status: CardStatus.ACTIVE },
+      })
+      if (!claimed.count) throw new BadRequestException('卡片已经激活')
       const user = await tx.user.create({
         data: {
           role: Role.STUDENT,
@@ -403,7 +428,6 @@ export class DomainService {
           isPrimary: true,
         },
       })
-      await tx.nfcCard.update({ where: { idd: card.idd }, data: { status: CardStatus.ACTIVE } })
       await tx.sop.create({
         data: {
           studentId: student.id,
@@ -853,6 +877,7 @@ export class DomainService {
     if (configured) {
       const response = await fetch(`${process.env.DIFY_API_BASE_URL}/chat-messages`, {
         method: 'POST',
+        signal: AbortSignal.timeout(15000),
         headers: {
           Authorization: `Bearer ${process.env.DIFY_API_KEY}`,
           'Content-Type': 'application/json',
@@ -917,10 +942,11 @@ export class DomainService {
       staff: 'STAFF',
     } as const
     const cards = Array.from({ length: count }, (_, index) => {
-      const suffix = `${Date.now().toString(16)}${index.toString(16).padStart(3, '0')}`.toUpperCase()
+      const suffix = randomBytes(8).toString('hex').toUpperCase()
+      const secret = randomBytes(8).toString('hex').toUpperCase()
       return {
         idd: `AUTO${suffix}`,
-        idh: `${suffix.slice(-4)}-${suffix.slice(-4)}`,
+        idh: `${secret.slice(0, 8)}-${secret.slice(8)}`,
         type: typeMap[cardType],
         label: `${cardType}-${index + 1}`,
         status: CardStatus.UNBOUND,
